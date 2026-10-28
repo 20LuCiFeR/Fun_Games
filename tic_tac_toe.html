@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="description" content="Play Tic Tac Toe against the CPU on Easy, Medium or Hard, or challenge a friend online with a private room code.">
+  <title>Tic Tac Toe — Online Multiplayer &amp; VS CPU</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1020;
+      --panel: #151d32;
+      --panel-light: #1b2640;
+      --outline: #303e59;
+      --muted: #99a7be;
+      --text: #f4f7ff;
+      --blue: #74b6ff;
+      --red: #ff9baf;
+      --green: #72e6b4;
+      --yellow: #f9d68d;
+      --cell: 104px;
+    }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px 16px 38px;
+      font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(ellipse 55% 36% at 14% 7%, #1b2d57 0%, transparent 78%),
+                  radial-gradient(ellipse 50% 34% at 90% 85%, #2b1c41 0%, transparent 78%),
+                  var(--bg);
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { opacity: .48; cursor: not-allowed; }
+    button:focus-visible, input:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+    .app { max-width: 970px; margin: 0 auto; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 4px 2px 30px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-size: 19px; font-weight: 800; letter-spacing: -.04em; }
+    .logo { width: 43px; height: 43px; display: flex; align-items: center; justify-content: center; border-radius: 13px; background: #293958; border: 1px solid #48607e; font-weight: 900; font-size: 19px; letter-spacing: -2px; }
+    .logo span:first-child { color: var(--blue); }
+    .logo span:last-child { color: var(--red); }
+    .online-tag { display: inline-flex; gap: 8px; align-items: center; white-space: nowrap; color: var(--muted); font-size: 12px; font-weight: 750; letter-spacing: .1em; }
+    .dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; box-shadow: 0 0 14px #72e6b485; flex: 0 0 auto; }
+    .shell { background: #131b2df2; border: 1px solid var(--outline); border-radius: 28px; box-shadow: 0 28px 90px #0007; padding: clamp(22px, 5vw, 48px); }
+    .screen[hidden], [hidden] { display: none !important; }
+    .eyebrow { color: var(--blue); text-transform: uppercase; letter-spacing: .17em; font-weight: 800; font-size: 12px; margin: 0 0 12px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: clamp(33px, 6vw, 55px); line-height: 1.12; letter-spacing: -.055em; margin-bottom: 16px; }
+    h2 { font-size: clamp(27px, 4vw, 37px); line-height: 1.2; letter-spacing: -.045em; margin-bottom: 12px; }
+    h3 { font-size: 21px; letter-spacing: -.035em; margin-bottom: 8px; }
+    .sub { color: var(--muted); max-width: 650px; font-size: 16px; margin-bottom: 30px; }
+    .accent { color: var(--blue); }
+    .choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .choice { border: 1px solid var(--outline); border-radius: 19px; background: linear-gradient(150deg, #202d49, #172138); padding: 26px; display: flex; flex-direction: column; align-items: flex-start; min-height: 286px; }
+    .choice:nth-child(2) { background: linear-gradient(150deg, #29233c, #1a2238); }
+    .choice:nth-child(3) { background: linear-gradient(150deg, #18372e, #17283a); }
+    .choice-icon { display: grid; place-items: center; width: 49px; height: 49px; border-radius: 13px; margin-bottom: 19px; font-size: 24px; font-weight: 900; background: #314b6d; color: var(--blue); }
+    .choice:nth-child(2) .choice-icon { background: #4a314e; color: var(--red); }
+    .choice:nth-child(3) .choice-icon { background: #285c4d; color: var(--green); }
+    .choice p { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
+    .btn { border: 1px solid transparent; border-radius: 11px; padding: 12px 18px; min-height: 46px; font-weight: 780; transition: background .18s, transform .18s, border-color .18s; }
+    .btn:not(:disabled):active { transform: translateY(1px); }
+    .primary { color: #0a192e; background: var(--blue); }
+    .primary:not(:disabled):hover { background: #9cccff; }
+    .secondary { background: #26344e; border-color: #405273; color: var(--text); }
+    .secondary:not(:disabled):hover { background: #334360; }
+    .danger { background: #37293a; color: #ffc5d0; border-color: #634056; }
+    .danger:not(:disabled):hover { background: #493047; }
+    .choice .btn { margin-top: auto; width: 100%; }
+    .input-label { display: block; font-weight: 720; color: #d7e1f2; font-size: 13px; margin: 3px 0 8px; }
+    .room-input { width: 100%; padding: 12px 13px; border: 1px solid #4a5876; border-radius: 10px; background: #0d172b; color: #fff; font-weight: 720; letter-spacing: .11em; text-transform: uppercase; min-height: 47px; }
+    .room-input::placeholder { color: #7888a0; letter-spacing: .015em; text-transform: none; font-weight: 500; }
+    .difficulty-select { width: 100%; min-height: 47px; padding: 11px 12px; border: 1px solid #4a5876; border-radius: 10px; background: #0d172b; color: #fff; font: inherit; cursor: pointer; }
+    .difficulty-select:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+    .cpu-controls { width: 100%; margin-top: auto; }
+    .cpu-controls .btn { margin-top: 12px; }
+    .join-controls { width: 100%; margin-top: auto; }
+    .join-controls .btn { margin-top: 12px; }
+    .notice { padding: 12px 15px; border-radius: 12px; border: 1px solid #41567b; background: #1c2e4a; color: #d9e9ff; margin-bottom: 24px; font-size: 14px; }
+    .notice.error { border-color: #814356; background: #3d2636; color: #ffd5dd; }
+    .notice.success { border-color: #356b5d; background: #183d39; color: #b9ffdc; }
+    .centered { text-align: center; max-width: 610px; margin: 0 auto; }
+    .waiting-icon { margin: 0 auto 16px; width: 74px; height: 74px; display: grid; place-items: center; background: #253c5e; border: 1px solid #42658e; border-radius: 22px; font-size: 33px; }
+    .status-pulse::after { display: inline-block; content: ''; width: 7px; height: 7px; margin-left: 8px; vertical-align: middle; border-radius: 50%; background: var(--yellow); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+    .room-card { background: #0d172b; border: 1px solid var(--outline); border-radius: 17px; padding: 20px; margin: 28px auto 18px; }
+    .caption { color: var(--muted); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; font-weight: 800; }
+    .room-code { font-size: clamp(30px, 7vw, 49px); font-weight: 850; letter-spacing: .15em; line-height: 1.4; margin: 6px 0 17px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+    .inline-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .help { color: var(--muted); font-size: 13px; margin: 14px 0 24px; }
+    .small-footnote { color: #8c9ab1; font-size: 12px; text-align: center; margin: 24px auto 0; max-width: 650px; }
+    .game-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 22px; }
+    .game-heading h2 { margin: 4px 0 0; }
+    .room-mini { display: flex; align-items: center; gap: 9px; background: #1e2c44; border: 1px solid var(--outline); border-radius: 100px; padding: 7px 10px 7px 14px; font-size: 12px; color: #c2d1e9; }
+    .room-mini strong { color: #fff; letter-spacing: .12em; font-size: 13px; }
+    .mini-button { background: #334c6b; color: #fff; border: 0; border-radius: 100px; padding: 6px 10px; font-size: 12px; font-weight: 740; }
+    .game-layout { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 28px; align-items: start; }
+    .game-main { min-width: 0; }
+    .status-box { border: 1px solid #405d76; background: #1a3046; border-radius: 14px; padding: 14px 16px; margin-bottom: 20px; font-weight: 800; color: var(--green); text-align: center; }
+    .status-box.waiting { background: #302b38; border-color: #655067; color: var(--yellow); }
+    .status-box.end { background: #3a3139; border-color: #76576b; color: var(--yellow); }
+    .board-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 0 0 15px; color: #aebcd3; font-size: 13px; font-weight: 730; }
+    .zoom { display: flex; gap: 7px; align-items: center; }
+    .zoom button { width: 36px; height: 35px; border-radius: 9px; border: 1px solid #4d607e; background: #273650; color: #f7faff; font-size: 22px; line-height: 1; }
+    .zoom button:not(:disabled):hover { background: #3a5276; }
+    .board { --gap: 9px; width: min(100%, calc(var(--cell) * 3 + var(--gap) * 2)); margin: 0 auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); }
+    .square { width: 100%; aspect-ratio: 1 / 1; border: 2px solid #435371; background: #202d48; border-radius: 16px; display: grid; place-items: center; font-size: clamp(32px, 7vw, 63px); font-weight: 900; line-height: 1; transition: background .16s, border-color .16s, transform .16s; }
+    .square:not(:disabled):hover { background: #304766; border-color: #78b4f2; transform: scale(1.015); }
+    .square:disabled { cursor: default; opacity: 1; }
+    .square.x { color: var(--blue); }
+    .square.o { color: var(--red); }
+    .square.win { border-color: #82e6ba; background: #244c4c; box-shadow: inset 0 0 0 1px #72e6b452; }
+    .side { background: #10192d; border: 1px solid var(--outline); border-radius: 18px; padding: 19px; }
+    .side h3 { font-size: 17px; margin-bottom: 18px; }
+    .player { display: flex; align-items: center; gap: 10px; margin-bottom: 17px; }
+    .symbol { width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; font-size: 24px; font-weight: 900; background: #274369; color: var(--blue); }
+    .symbol.o { background: #51344c; color: var(--red); }
+    .player-info { min-width: 0; font-size: 13px; font-weight: 800; line-height: 1.3; }
+    .player-info small { display: block; color: var(--muted); font-size: 11px; font-weight: 550; margin-top: 4px; }
+    .scoreboard { border-top: 1px solid var(--outline); margin-top: 10px; padding-top: 18px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; }
+    .scoreboard strong { display: block; font-size: 24px; font-variant-numeric: tabular-nums; }
+    .scoreboard span { color: var(--muted); font-size: 11px; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 24px; }
+    .actions .btn { flex: 1 1 136px; }
+    .game-bottom { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--outline); color: var(--muted); font-size: 13px; }
+    .text-button { background: transparent; border: 0; color: #f0b1bf; font-weight: 780; padding: 7px; }
+    .text-button:hover { text-decoration: underline; }
+    @media (max-width: 920px) and (min-width: 721px) { .choices { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 720px) {
+      .choices { grid-template-columns: 1fr; }
+      .choice { min-height: 0; padding: 22px; }
+      .choice-icon { margin-bottom: 13px; }
+      .choice p { margin-bottom: 18px; }
+      .game-layout { grid-template-columns: 1fr; gap: 19px; }
+      .side { max-width: 480px; width: 100%; margin: 0 auto; }
+      .side .players { display: grid; grid-template-columns: 1fr 1fr; }
+      .scoreboard { margin-top: 0; }
+      .square { border-radius: 12px; }
+      .shell { border-radius: 21px; }
+    }
+    @media (max-width: 460px) {
+      .online-tag { font-size: 10px; letter-spacing: .04em; }
+      .topbar { padding-bottom: 18px; }
+      .game-heading { align-items: flex-start; }
+      .board { --gap: 7px; }
+      .square { font-size: clamp(31px, 14vw, 58px); }
+      .game-bottom { align-items: flex-start; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><div class="logo" aria-hidden="true"><span>X</span><span>O</span></div><span>Tic Tac Toe</span></div>
+      <div class="online-tag"><span class="dot" aria-hidden="true"></span> ONLINE + OFFLINE</div>
+    </header>
+    <main class="shell">
+      <section class="screen" id="homeScreen">
+        <p class="eyebrow">Classic game · Play your way</p>
+        <h1>Your move.<br><span class="accent">Your challenge.</span></h1>
+        <p class="sub">Play with a friend online using a room code, or take on the computer at your own difficulty. No account needed.</p>
+        <div id="homeNotice" class="notice" role="alert" hidden></div>
+        <div class="choices">
+          <div class="choice">
+            <div class="choice-icon" aria-hidden="true">X</div>
+            <h3>Host a game</h3>
+            <p>Create a private game room and invite your friend. You'll play first as X.</p>
+            <button id="hostBtn" class="btn primary" type="button">Create a room</button>
+          </div>
+          <form id="joinForm" class="choice">
+            <div class="choice-icon" aria-hidden="true">O</div>
+            <h3>Join a game</h3>
+            <p>Enter the room code your friend sent. You'll play as O.</p>
+            <div class="join-controls">
+              <label class="input-label" for="joinCode">ROOM CODE</label>
+              <input id="joinCode" class="room-input" type="text" inputmode="text" maxlength="12" autocomplete="off" spellcheck="false" placeholder="Enter 8-character code" aria-describedby="joinHint">
+              <span id="joinHint" class="help" style="display:block;margin:6px 0 0;">Letters and numbers, no spaces.</span>
+              <button class="btn secondary" type="submit">Join room</button>
+            </div>
+          </form>
+          <form id="cpuForm" class="choice">
+            <div class="choice-icon" aria-hidden="true">⚙</div>
+            <h3>Play vs CPU</h3>
+            <p>Challenge the computer on your own. Choose a difficulty and start instantly, even offline.</p>
+            <div class="cpu-controls">
+              <label class="input-label" for="cpuDifficulty">DIFFICULTY</label>
+              <select id="cpuDifficulty" class="difficulty-select">
+                <option value="easy">Easy — Casual</option>
+                <option value="medium">Medium — Balanced</option>
+                <option value="hard" selected>Hard — Unbeatable</option>
+              </select>
+              <button class="btn primary" type="submit">Play vs CPU</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="screen centered" id="waitingScreen" hidden>
+        <div class="waiting-icon" aria-hidden="true">⌛</div>
+        <p class="eyebrow">Room created</p>
+        <h2>Waiting for a friend<span class="status-pulse" aria-hidden="true"></span></h2>
+        <p class="sub" style="margin-left:auto;margin-right:auto;">You're already in the room as <strong style="color:var(--blue)">X</strong>. Send the code or invite link below to one friend.</p>
+        <div class="room-card">
+          <div class="caption">Your room code</div>
+          <div id="roomCode" class="room-code">••••••••</div>
+          <div class="inline-actions">
+            <button id="copyCodeBtn" class="btn primary" type="button">Copy code</button>
+            <button id="copyLinkBtn" class="btn secondary" type="button">Copy invite link</button>
+          </div>
+        </div>
+        <p class="help" id="waitingMessage" role="status">Room is ready. Your friend can join now.</p>
+        <button id="cancelHostBtn" class="btn secondary" type="button">Cancel room</button>
+      </section>
+
+      <section class="screen centered" id="joiningScreen" hidden>
+        <div class="waiting-icon" aria-hidden="true">↗</div>
+        <p class="eyebrow">Joining online game</p>
+        <h2>Connecting to your friend<span class="status-pulse" aria-hidden="true"></span></h2>
+        <p id="joiningMessage" class="sub" style="margin-left:auto;margin-right:auto;">Opening the room…</p>
+        <button id="cancelJoinBtn" class="btn secondary" type="button">Cancel</button>
+      </section>
+
+      <section class="screen" id="gameScreen" hidden>
+        <div class="game-heading">
+          <div><p class="eyebrow" id="roundLabel" style="margin-bottom:5px;">Round 1</p><h2>Let's play!</h2></div>
+          <div class="room-mini"><span id="gameModeLabel">ROOM</span> <strong id="gameRoomCode">--------</strong> <button id="copyGameCodeBtn" class="mini-button" type="button" title="Copy room code">Copy</button></div>
+        </div>
+        <div class="game-layout">
+          <div class="game-main">
+            <div id="turnStatus" class="status-box" role="status" aria-live="polite">Your turn (X)</div>
+            <div class="board-toolbar"><span>Game board</span><div class="zoom"><span>Board size</span><button id="zoomOutBtn" type="button" aria-label="Make board smaller">−</button><button id="zoomInBtn" type="button" aria-label="Make board bigger">+</button></div></div>
+            <div id="board" class="board" role="group" aria-label="Tic Tac Toe board">
+              <button type="button" class="square" data-index="0" aria-label="Row 1 column 1"></button>
+              <button type="button" class="square" data-index="1" aria-label="Row 1 column 2"></button>
+              <button type="button" class="square" data-index="2" aria-label="Row 1 column 3"></button>
+              <button type="button" class="square" data-index="3" aria-label="Row 2 column 1"></button>
+              <button type="button" class="square" data-index="4" aria-label="Row 2 column 2"></button>
+              <button type="button" class="square" data-index="5" aria-label="Row 2 column 3"></button>
+              <button type="button" class="square" data-index="6" aria-label="Row 3 column 1"></button>
+              <button type="button" class="square" data-index="7" aria-label="Row 3 column 2"></button>
+              <button type="button" class="square" data-index="8" aria-label="Row 3 column 3"></button>
+            </div>
+          </div>
+          <aside class="side">
+            <h3>Players</h3>
+            <div class="players">
+              <div class="player"><span class="symbol">X</span><span class="player-info" id="playerX">Host <small>Plays first</small></span></div>
+              <div class="player"><span class="symbol o">O</span><span class="player-info" id="playerO">Guest <small>Plays second</small></span></div>
+            </div>
+            <div class="scoreboard" aria-label="Match scores">
+              <div><strong id="scoreX">0</strong><span>X wins</span></div>
+              <div><strong id="scoreDraw">0</strong><span>Draws</span></div>
+              <div><strong id="scoreO">0</strong><span>O wins</span></div>
+            </div>
+          </aside>
+        </div>
+        <div class="actions" id="postGameActions" hidden>
+          <button id="rematchBtn" class="btn primary" type="button">Play again</button>
+          <button id="changeRoomBtn" class="btn secondary" type="button">Change room</button>
+          <button id="exitBtn" class="btn danger" type="button">Exit</button>
+        </div>
+        <div class="game-bottom"><span id="gameHint">Take turns placing X and O. Three in a row wins.</span><button id="leaveBtn" class="text-button" type="button">Leave room</button></div>
+      </section>
+
+      <section class="screen centered" id="exitScreen" hidden>
+        <div class="waiting-icon" aria-hidden="true">✓</div>
+        <p class="eyebrow">Game ended</p>
+        <h2>Thanks for playing!</h2>
+        <p class="sub" style="margin-left:auto;margin-right:auto;">You've left the room. You can close this tab or start a new game.</p>
+        <button id="homeBtn" class="btn primary" type="button">Back to main menu</button>
+      </section>
+    </main>
+    <p class="small-footnote">Works on GitHub Pages. VS CPU runs entirely in your browser, even offline. Online multiplayer uses WebRTC and the PeerJS signaling service; both players need internet access.</p>
+  </div>
+
+  <!-- A static site cannot open Python/TCP sockets. PeerJS enables direct browser-to-browser games. -->
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
+  <script>
+    (() => {
+      'use strict';
+
+      const $ = id => document.getElementById(id);
+      const cells = Array.from(document.querySelectorAll('.square'));
+      const wins = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6]
+      ];
+      const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      const screens = ['home', 'waiting', 'joining', 'game', 'exit'];
+      const PEER_PREFIX = 'github-ttt-room-';
+      let peer = null;
+      let connection = null;
+      let session = 0;
+      let connectTimer = null;
+      let pendingTimer = null;
+      let role = null;
+      let stage = 'home';
+      let roomCode = '';
+      let board = Array(9).fill('');
+      let myTurn = false;
+      let round = 1;
+      let scores = { X: 0, O: 0, draw: 0 };
+      let winningLine = [];
+      let lastMove = -1;
+      let rematchRequested = false;
+      let tileSize = 104;
+      let hostAttempts = 0;
+      let cpuDifficulty = 'hard';
+      let cpuTimer = null;
+
+      function show(screen) {
+        screens.forEach(s => $(s + 'Screen').hidden = s !== screen);
+        stage = screen === 'game' ? 'playing' : screen;
+      }
+
+      function notice(text, kind = 'error') {
+        const el = $('homeNotice');
+        el.hidden = !text;
+        el.textContent = text || '';
+        el.className = 'notice ' + kind;
+      }
+
+      function showHome(message = '', kind = 'error') {
+        disconnect(false);
+        show('home');
+        notice(message, kind);
+      }
+
+      function randomRoomCode() {
+        let code = '';
+        const bytes = new Uint32Array(8);
+        if (globalThis.crypto && crypto.getRandomValues) {
+          crypto.getRandomValues(bytes);
+          for (const value of bytes) code += alphabet[value % alphabet.length];
+        } else {
+          for (let i = 0; i < 8; i++) code += alphabet[Math.floor(Math.random() * alphabet.length)];
+        }
+        return code;
+      }
+
+      function clearTimers() {
+        clearTimeout(connectTimer);
+        clearTimeout(pendingTimer);
+        clearTimeout(cpuTimer);
+        connectTimer = null;
+        pendingTimer = null;
+        cpuTimer = null;
+      }
+
+      function disconnect(tellOpponent = true) {
+        session++;
+        clearTimers();
+        const oldConnection = connection;
+        const oldPeer = peer;
+        connection = null;
+        peer = null;
+        if (oldConnection) {
+          try { if (tellOpponent && oldConnection.open) oldConnection.send({ type: 'leave' }); } catch (_) {}
+          try { oldConnection.close(); } catch (_) {}
+        }
+        if (oldPeer) {
+          try { oldPeer.destroy(); } catch (_) {}
+        }
+        role = null;
+        roomCode = '';
+        board = Array(9).fill('');
+        myTurn = false;
+        round = 1;
+        scores = { X: 0, O: 0, draw: 0 };
+        winningLine = [];
+        lastMove = -1;
+        rematchRequested = false;
+      }
+
+      function peerAvailable() {
+        if (typeof Peer === 'function') return true;
+        notice('The online connection library could not load. Check your internet connection, then refresh the page.');
+        return false;
+      }
+
+      function roomLink() {
+        const url = new URL(window.location.href);
+        url.hash = '';
+        url.searchParams.set('room', roomCode);
+        return url.toString();
+      }
+
+      async function copyText(value, button) {
+        const old = button.textContent;
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(value);
+          } else {
+            const temp = document.createElement('textarea');
+            temp.value = value;
+            temp.style.cssText = 'position:fixed;left:-9999px;top:0';
+            document.body.appendChild(temp);
+            temp.select();
+            const success = document.execCommand('copy');
+            temp.remove();
+            if (!success) throw new Error('Copy failed');
+          }
+          button.textContent = 'Copied!';
+          setTimeout(() => { if (button.isConnected) button.textContent = old; }, 1800);
+        } catch (_) {
+          window.prompt('Copy this text:', value);
+        }
+      }
+
+      function hostGame(retry = 0) {
+        if (!peerAvailable()) return;
+        if (retry === 0) {
+          disconnect(false);
+          notice('');
+        }
+        show('waiting');
+        role = 'host';
+        hostAttempts = retry;
+        roomCode = randomRoomCode();
+        $('roomCode').textContent = roomCode;
+        $('waitingMessage').textContent = 'Creating your room…';
+        $('copyCodeBtn').disabled = true;
+        $('copyLinkBtn').disabled = true;
+        const ticket = ++session;
+        try { peer = new Peer(PEER_PREFIX + roomCode); }
+        catch (_) { showHome('Could not start the online connection. Please try again.'); return; }
+        const currentPeer = peer;
+        currentPeer.on('open', () => {
+          if (ticket !== session || currentPeer !== peer) return;
+          $('waitingMessage').textContent = 'Room is ready! Waiting for one other player…';
+          $('copyCodeBtn').disabled = false;
+          $('copyLinkBtn').disabled = false;
+        });
+        currentPeer.on('connection', incoming => {
+          if (ticket !== session || currentPeer !== peer) { incoming.close(); return; }
+          acceptIncoming(incoming);
+        });
+        currentPeer.on('error', err => {
+          if (ticket !== session || currentPeer !== peer) return;
+          if (err.type === 'unavailable-id' && stage === 'waiting' && retry < 3) {
+            try { currentPeer.destroy(); } catch (_) {}
+            peer = null;
+            hostGame(retry + 1);
+            return;
+          }
+          handlePeerError(err);
+        });
+        currentPeer.on('disconnected', () => {
+          if (ticket !== session || currentPeer !== peer) return;
+          if (stage === 'waiting') $('waitingMessage').textContent = 'Reconnecting to the room service…';
+          try { if (!currentPeer.destroyed) currentPeer.reconnect(); } catch (_) {}
+        });
+      }
+
+      function acceptIncoming(incoming) {
+        // Reserve the room immediately, including while the first guest is connecting.
+        if (connection) {
+          incoming.on('open', () => {
+            try { incoming.send({ type: 'rejected', reason: 'This room already has two players.' }); } catch (_) {}
+            setTimeout(() => { try { incoming.close(); } catch (_) {} }, 800);
+          });
+          return;
+        }
+        connection = incoming;
+        const ticket = session;
+        pendingTimer = setTimeout(() => {
+          if (ticket === session && connection === incoming && !incoming.open) {
+            connection = null;
+            try { incoming.close(); } catch (_) {}
+          }
+        }, 15000);
+        attachConnection(incoming, ticket);
+        incoming.on('open', () => {
+          if (ticket !== session || connection !== incoming) return;
+          clearTimeout(pendingTimer);
+          pendingTimer = null;
+          board = Array(9).fill('');
+          scores = { X: 0, O: 0, draw: 0 };
+          round = 1;
+          myTurn = true;
+          winningLine = [];
+          lastMove = -1;
+          rematchRequested = false;
+          show('game');
+          renderGame();
+          send({ type: 'init', round: round });
+        });
+      }
+
+      function joinGame(rawCode) {
+        if (!peerAvailable()) return;
+        const code = rawCode.trim().replace(/\s+/g, '').toUpperCase();
+        if (!/^[A-Z2-9]{8}$/.test(code)) {
+          notice('Enter a valid 8-character room code (letters and numbers).');
+          return;
+        }
+        disconnect(false);
+        notice('');
+        role = 'guest';
+        roomCode = code;
+        show('joining');
+        $('joiningMessage').textContent = `Finding room ${code}…`;
+        const ticket = ++session;
+        try { peer = new Peer(); }
+        catch (_) { showHome('Could not start the online connection. Please try again.'); return; }
+        const currentPeer = peer;
+        connectTimer = setTimeout(() => {
+          if (ticket === session && stage === 'joining') showHome('Connection timed out. Check the room code and ask the host to keep their page open.');
+        }, 20000);
+        currentPeer.on('open', () => {
+          if (ticket !== session || currentPeer !== peer) return;
+          $('joiningMessage').textContent = `Connecting to room ${code}…`;
+          const outgoing = currentPeer.connect(PEER_PREFIX + code, { reliable: true, serialization: 'json' });
+          connection = outgoing;
+          attachConnection(outgoing, ticket);
+          outgoing.on('open', () => {
+            if (ticket !== session || connection !== outgoing) return;
+            $('joiningMessage').textContent = 'Connected! Starting game…';
+          });
+        });
+        currentPeer.on('error', err => {
+          if (ticket !== session || currentPeer !== peer) return;
+          handlePeerError(err);
+        });
+      }
+
+      function handlePeerError(err) {
+        const type = err && err.type;
+        if (type === 'peer-unavailable') {
+          showHome('Room not found. Check the code and make sure the host is online.');
+        } else if (stage === 'playing' || stage === 'ended') {
+          $('gameHint').textContent = 'Network warning: ' + (err.message || 'Signaling unavailable.');
+        } else {
+          showHome('Could not connect: ' + (err.message || 'Please check the internet connection and try again.'));
+        }
+      }
+
+      function attachConnection(conn, ticket) {
+        conn.on('data', data => {
+          if (ticket !== session || connection !== conn || !data || typeof data !== 'object') return;
+          handleMessage(data);
+        });
+        conn.on('close', () => {
+          if (ticket !== session || connection !== conn) return;
+          connection = null;
+          opponentLeft();
+        });
+        conn.on('error', err => {
+          if (ticket !== session || connection !== conn) return;
+          if (role === 'guest' && stage === 'joining') showHome('Could not connect to the room. Please try again.');
+          else $('gameHint').textContent = 'Connection warning: ' + (err.message || 'Network issue.');
+        });
+      }
+
+      function opponentLeft() {
+        if (role === 'host' && peer && !peer.destroyed) {
+          clearTimers();
+          board = Array(9).fill('');
+          scores = { X: 0, O: 0, draw: 0 };
+          round = 1;
+          myTurn = false;
+          rematchRequested = false;
+          show('waiting');
+          $('waitingMessage').textContent = 'Your opponent left. Share the same code with a new player.';
+          $('copyCodeBtn').disabled = false;
+          $('copyLinkBtn').disabled = false;
+        } else {
+          showHome('The host disconnected or ended the room.');
+        }
+      }
+
+      function send(data) {
+        if (!connection || !connection.open) return false;
+        try { connection.send(data); return true; }
+        catch (_) { return false; }
+      }
+
+      function handleMessage(data) {
+        switch (data.type) {
+          case 'init':
+            if (role !== 'guest' || stage !== 'joining' || data.round !== 1) return;
+            clearTimeout(connectTimer);
+            connectTimer = null;
+            round = 1;
+            board = Array(9).fill('');
+            scores = { X: 0, O: 0, draw: 0 };
+            myTurn = false;
+            winningLine = [];
+            lastMove = -1;
+            rematchRequested = false;
+            show('game');
+            renderGame();
+            break;
+          case 'move':
+            receiveMove(data);
+            break;
+          case 'restart_request':
+            if (role === 'host' && stage === 'ended' && data.round === round) hostRestart();
+            break;
+          case 'reset':
+            if (role === 'guest' && stage === 'ended' && Number.isSafeInteger(data.round) && data.round > round) {
+              round = data.round;
+              startRound();
+            }
+            break;
+          case 'rejected':
+            if (role === 'guest') showHome('This room is full. Only two players can join a game.');
+            break;
+          case 'leave':
+            if (connection) { const c = connection; connection = null; try { c.close(); } catch (_) {} }
+            opponentLeft();
+            break;
+        }
+      }
+
+      function result() {
+        for (const line of wins) {
+          const [a, b, c] = line;
+          if (board[a] && board[a] === board[b] && board[a] === board[c]) return { winner: board[a], line };
+        }
+        if (board.every(Boolean)) return { winner: 'draw', line: [] };
+        return null;
+      }
+
+      function placeMark(index, mark) {
+        board[index] = mark;
+        lastMove = index;
+        const outcome = result();
+        if (outcome) {
+          winningLine = outcome.line;
+          scores[outcome.winner] += 1;
+          stage = 'ended';
+          myTurn = false;
+        }
+        return outcome;
+      }
+
+      // CPU uses ordinary Tic Tac Toe rules; Hard searches every response via minimax.
+      // All choices are made only among empty squares, so the human can freely
+      // choose any available square on their turn.
+      function boardOutcome(state) {
+        for (const [a, b, c] of wins) {
+          if (state[a] && state[a] === state[b] && state[a] === state[c]) return state[a];
+        }
+        return state.every(Boolean) ? 'draw' : null;
+      }
+
+      function minimax(state, turn, depth, alpha, beta) {
+        const outcome = boardOutcome(state);
+        if (outcome === 'O') return 10 - depth;
+        if (outcome === 'X') return depth - 10;
+        if (outcome === 'draw') return 0;
+        if (turn === 'O') {
+          let best = -Infinity;
+          for (let i = 0; i < 9; i++) {
+            if (state[i]) continue;
+            state[i] = 'O';
+            best = Math.max(best, minimax(state, 'X', depth + 1, alpha, beta));
+            state[i] = '';
+            alpha = Math.max(alpha, best);
+            if (beta <= alpha) break;
+          }
+          return best;
+        }
+        let best = Infinity;
+        for (let i = 0; i < 9; i++) {
+          if (state[i]) continue;
+          state[i] = 'X';
+          best = Math.min(best, minimax(state, 'O', depth + 1, alpha, beta));
+          state[i] = '';
+          beta = Math.min(beta, best);
+          if (beta <= alpha) break;
+        }
+        return best;
+      }
+
+      function cpuChooseMove() {
+        const free = board.map((v, i) => v ? -1 : i).filter(i => i >= 0);
+        if (!free.length) return -1;
+        const randomMove = () => free[Math.floor(Math.random() * free.length)];
+        if (cpuDifficulty === 'easy' || (cpuDifficulty === 'medium' && Math.random() < 0.35)) return randomMove();
+        let bestScore = -Infinity;
+        let bestMoves = [];
+        for (const i of free) {
+          board[i] = 'O';
+          const score = minimax(board, 'X', 1, -Infinity, Infinity);
+          board[i] = '';
+          if (score > bestScore) { bestScore = score; bestMoves = [i]; }
+          else if (score === bestScore) bestMoves.push(i);
+        }
+        return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+      }
+
+      function cpuMove() {
+        cpuTimer = null;
+        if (role !== 'cpu' || stage !== 'playing' || myTurn) return;
+        const index = cpuChooseMove();
+        if (index < 0 || board[index]) return;
+        placeMark(index, 'O');
+        if (stage === 'playing') myTurn = true;
+        renderGame();
+      }
+
+      function startCpuGame() {
+        disconnect(false);
+        role = 'cpu';
+        cpuDifficulty = $('cpuDifficulty').value;
+        if (!['easy', 'medium', 'hard'].includes(cpuDifficulty)) cpuDifficulty = 'hard';
+        notice('');
+        show('game');
+        startRound();
+      }
+
+      function makeMove(index) {
+        if (stage !== 'playing' || !myTurn || board[index]) return;
+        if (role === 'cpu') {
+          placeMark(index, 'X');
+          myTurn = false;
+          renderGame();
+          if (stage === 'playing') cpuTimer = setTimeout(cpuMove, 400);
+          return;
+        }
+        if (!connection || !connection.open) return;
+        const mark = role === 'host' ? 'X' : 'O';
+        if (!send({ type: 'move', index, round })) {
+          $('gameHint').textContent = 'Unable to send move. Check your connection.';
+          return;
+        }
+        placeMark(index, mark);
+        myTurn = false;
+        renderGame();
+      }
+
+      function receiveMove(data) {
+        if (stage !== 'playing' || myTurn || data.round !== round ||
+            !Number.isInteger(data.index) || data.index < 0 || data.index > 8 || board[data.index]) return;
+        const opponentMark = role === 'host' ? 'O' : 'X';
+        placeMark(data.index, opponentMark);
+        if (stage === 'playing') myTurn = true;
+        renderGame();
+      }
+
+      function hostRestart() {
+        if (role !== 'host' || stage !== 'ended') return;
+        round += 1;
+        startRound();
+        send({ type: 'reset', round });
+      }
+
+      function requestRematch() {
+        if (stage !== 'ended') return;
+        if (role === 'cpu') { round += 1; startRound(); }
+        else if (role === 'host') hostRestart();
+        else if (!rematchRequested) {
+          if (send({ type: 'restart_request', round })) {
+            rematchRequested = true;
+            $('rematchBtn').disabled = true;
+            $('rematchBtn').textContent = 'Request sent…';
+            $('gameHint').textContent = 'Waiting for the host to start the next game…';
+          }
+        }
+      }
+
+      function startRound() {
+        clearTimeout(cpuTimer);
+        cpuTimer = null;
+        board = Array(9).fill('');
+        winningLine = [];
+        lastMove = -1;
+        myTurn = role === 'host' || role === 'cpu';
+        rematchRequested = false;
+        stage = 'playing';
+        renderGame();
+      }
+
+      function renderGame() {
+        const myMark = role === 'host' || role === 'cpu' ? 'X' : 'O';
+        const theirMark = role === 'host' || role === 'cpu' ? 'O' : 'X';
+        const outcome = result();
+        $('roundLabel').textContent = 'Round ' + round;
+        $('gameModeLabel').textContent = role === 'cpu' ? 'MODE' : 'ROOM';
+        $('gameRoomCode').textContent = role === 'cpu' ? 'VS CPU' : roomCode;
+        $('copyGameCodeBtn').hidden = role === 'cpu';
+        $('playerX').innerHTML = role === 'cpu' ? 'You <small>Plays first</small>' : (role === 'host' ? 'You (Host)<small>Plays first</small>' : 'Opponent (Host)<small>Plays first</small>');
+        $('playerO').innerHTML = role === 'cpu' ? 'Computer <small>' + cpuDifficulty.charAt(0).toUpperCase() + cpuDifficulty.slice(1) + ' difficulty</small>' : (role === 'guest' ? 'You (Guest)<small>Plays second</small>' : 'Opponent (Guest)<small>Plays second</small>');
+        $('scoreX').textContent = scores.X;
+        $('scoreO').textContent = scores.O;
+        $('scoreDraw').textContent = scores.draw;
+        const status = $('turnStatus');
+        status.className = 'status-box';
+        if (stage === 'ended' && outcome) {
+          status.classList.add('end');
+          if (outcome.winner === 'draw') status.textContent = "It's a draw!";
+          else status.textContent = outcome.winner === myMark ? `You win! (${myMark})` : (role === 'cpu' ? 'CPU wins! (O)' : `Opponent wins (${theirMark})`);
+        } else if (myTurn) {
+          status.textContent = `Your turn (${myMark})`;
+        } else {
+          status.classList.add('waiting');
+          status.textContent = role === 'cpu' ? 'CPU is thinking… (O)' : `Opponent's turn (${theirMark})`;
+        }
+        for (let i = 0; i < cells.length; i++) {
+          const cell = cells[i];
+          const mark = board[i];
+          cell.textContent = mark;
+          cell.className = 'square' + (mark ? ' ' + mark.toLowerCase() : '') + (winningLine.includes(i) ? ' win' : '');
+          cell.disabled = stage !== 'playing' || !myTurn || !!mark;
+          cell.setAttribute('aria-label', `Row ${Math.floor(i / 3) + 1} column ${i % 3 + 1}${mark ? ', ' + mark : ', empty'}`);
+        }
+        $('postGameActions').hidden = stage !== 'ended';
+        $('rematchBtn').disabled = rematchRequested;
+        $('rematchBtn').textContent = rematchRequested ? 'Request sent…' : 'Play again';
+        $('changeRoomBtn').textContent = role === 'cpu' ? 'Change mode' : 'Change room';
+        $('leaveBtn').textContent = role === 'cpu' ? 'Main menu' : 'Leave room';
+        $('gameHint').textContent = stage === 'ended'
+          ? (role === 'cpu' ? 'Game finished. Play again against the CPU, or change mode.' : 'Game finished. Play again with the same friend, or leave the room.')
+          : (role === 'cpu' ? 'You are X. Choose any empty square on your turn. Three in a row wins.' : 'Take turns placing X and O. Three in a row wins.');
+      }
+
+      $('cpuForm').addEventListener('submit', e => { e.preventDefault(); startCpuGame(); });
+      $('hostBtn').addEventListener('click', () => hostGame());
+      $('joinForm').addEventListener('submit', e => { e.preventDefault(); joinGame($('joinCode').value); });
+      $('joinCode').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^a-z0-9]/gi, '').toUpperCase(); });
+      $('cancelHostBtn').addEventListener('click', () => { disconnect(true); show('home'); notice(''); });
+      $('cancelJoinBtn').addEventListener('click', () => showHome('', 'info'));
+      $('copyCodeBtn').addEventListener('click', e => copyText(roomCode, e.currentTarget));
+      $('copyLinkBtn').addEventListener('click', e => copyText(roomLink(), e.currentTarget));
+      $('copyGameCodeBtn').addEventListener('click', e => copyText(roomCode, e.currentTarget));
+      $('rematchBtn').addEventListener('click', requestRematch);
+      $('changeRoomBtn').addEventListener('click', () => { disconnect(true); show('home'); notice(''); });
+      $('leaveBtn').addEventListener('click', () => { disconnect(true); show('home'); notice('You left the room.', 'success'); });
+      $('exitBtn').addEventListener('click', () => { disconnect(true); show('exit'); });
+      $('homeBtn').addEventListener('click', () => { show('home'); notice(''); });
+      $('zoomOutBtn').addEventListener('click', () => {
+        tileSize = Math.max(62, tileSize - 14);
+        $('board').style.setProperty('--cell', tileSize + 'px');
+        $('zoomOutBtn').disabled = tileSize === 62;
+        $('zoomInBtn').disabled = false;
+      });
+      $('zoomInBtn').addEventListener('click', () => {
+        tileSize = Math.min(160, tileSize + 14);
+        $('board').style.setProperty('--cell', tileSize + 'px');
+        $('zoomInBtn').disabled = tileSize === 160;
+        $('zoomOutBtn').disabled = false;
+      });
+      cells.forEach(cell => cell.addEventListener('click', () => makeMove(Number(cell.dataset.index))));
+      window.addEventListener('beforeunload', () => {
+        if (connection && connection.open) { try { connection.send({ type: 'leave' }); } catch (_) {} }
+      });
+      const initialCode = new URL(window.location.href).searchParams.get('room');
+      if (initialCode && /^[A-Z2-9]{8}$/i.test(initialCode)) $('joinCode').value = initialCode.toUpperCase();
+      show('home');
+    })();
+  </script>
+</body>
+</html>
