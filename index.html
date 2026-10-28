@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fun Games | Game Hub</title>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+    --green: #238636; --green-hover: #2ea043;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+  header { text-align: center; padding: 56px 20px 36px; background: linear-gradient(135deg, #161b22, #172554); border-bottom: 1px solid var(--border); }
+  header h1 { font-size: clamp(30px, 6vw, 42px); margin: 0 0 10px; color: var(--accent); }
+  header p { margin: 0; color: #b1bac4; }
+  main { flex: 1; width: 100%; max-width: 1100px; margin: 36px auto; padding: 0 20px; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+  .toolbar input { flex: 1 1 240px; max-width: 380px; padding: 10px 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 15px; }
+  .toolbar input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .count { color: var(--muted); font-size: 14px; }
+  .games { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+  .card { display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: transform .2s, border-color .2s; }
+  .card:hover { transform: translateY(-4px); border-color: var(--accent); }
+  .emoji { font-size: 38px; line-height: 1; }
+  .card h2 { font-size: 21px; margin: 16px 0 8px; }
+  .card p { color: var(--muted); line-height: 1.5; margin: 0 0 14px; flex: 1; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .tag { font-size: 12px; color: var(--accent); border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; }
+  .btn { align-self: flex-start; padding: 10px 18px; background: var(--green); color: #fff; text-decoration: none; border-radius: 6px; font-weight: 700; }
+  .btn:hover { background: var(--green-hover); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 40px 0; }
+  footer { text-align: center; padding: 24px; color: var(--muted); border-top: 1px solid var(--border); }
+  footer a { color: var(--accent); text-decoration: none; }
+  @media (prefers-reduced-motion: reduce) { .card { transition: none; } .card:hover { transform: none; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎮 Fun Games</h1>
+  <p>A collection of games and fun little projects.</p>
+</header>
+
+<main>
+  <div class="toolbar">
+    <input id="search" type="search" placeholder="Search games" aria-label="Search games">
+    <span class="count" id="count"></span>
+  </div>
+  <div class="games" id="games"></div>
+</main>
+
+<footer>
+  <p>Made with ❤️ and Python | <a href="https://github.com/20LuCiFeR/Fun_Games">View GitHub Repository</a></p>
+</footer>
+
+<script>
+/* ============================================================
+   ADD A NEW GAME: copy one object below, paste it in the list,
+   change the values, and upload the new .html file to the repo.
+   "file" is the page's path inside the repo (e.g. "tictactoe.html"
+   or "games/snake.html").
+   ============================================================ */
+const GAMES = [
+  {
+    title: "Bingo",
+    emoji: "🎱",
+    description: "Classic 75-ball bingo. Mark the called numbers and complete a line.",
+    file: "bingo.html",
+    tags: ["Classic", "Single player"]
+  }
+];
+
+const grid = document.getElementById("games");
+const countEl = document.getElementById("count");
+const search = document.getElementById("search");
+
+function render(list) {
+  grid.innerHTML = "";
+  countEl.textContent = list.length + (list.length === 1 ? " game" : " games");
+  if (!list.length) {
+    grid.innerHTML = '<div class="empty">No games match your search. Try a different word.</div>';
+    return;
+  }
+  list.forEach(g => {
+    const card = document.createElement("div");
+    card.className = "card";
+    const tags = (g.tags || []).map(t => '<span class="tag">' + t + '</span>').join("");
+    card.innerHTML =
+      '<div class="emoji">' + g.emoji + '</div>' +
+      '<h2>' + g.title + '</h2>' +
+      '<p>' + g.description + '</p>' +
+      '<div class="tags">' + tags + '</div>' +
+      '<a class="btn" href="' + g.file + '">Play now</a>';
+    grid.appendChild(card);
+  });
+}
+
+search.addEventListener("input", () => {
+  const q = search.value.trim().toLowerCase();
+  render(GAMES.filter(g =>
+    (g.title + " " + g.description + " " + (g.tags || []).join(" ")).toLowerCase().includes(q)
+  ));
+});
+
+render(GAMES);
+</script>
+</body>
+</html>
