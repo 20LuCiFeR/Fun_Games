@@ -32,7 +32,7 @@ input,select{background:#0c1729;color:var(--ink);border:1px solid #34507d;border
 .seat u{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:800;text-decoration:none;color:#fff;box-shadow:inset 0 -3px 6px #0005,0 1px 3px #0008}
 .seat b{display:block;font-size:14px}.seat i{display:block;font-style:normal;color:#9db4d8;font-size:12px}
 .seat.turn{border-color:var(--gold);animation:pulse 1.3s ease-in-out infinite}.seat.turn i{color:#ffe082}
-.seat.off{opacity:.6}.seat.off i{color:#ff8a80}
+.seat.off{opacity:.6}.seat.off i{color:#ff8a80}.seat.out{opacity:.35;filter:grayscale(1)}
 @keyframes pulse{50%{box-shadow:0 0 22px #ffc83daa,0 4px 12px #0007}}
 #plaque{position:absolute;transform:translate(-50%,-50%);text-align:center;background:linear-gradient(#0e2036dd,#08141fdd);border:1px solid #2f5a60;border-radius:12px;padding:8px 22px;min-width:190px;box-shadow:0 6px 16px #0008;pointer-events:none}
 #plaque b{display:block;font:700 19px "Segoe UI",system-ui,sans-serif}#plaque small{color:#a9bfdc;font-size:12px}
@@ -56,8 +56,8 @@ input,select{background:#0c1729;color:var(--ink);border:1px solid #34507d;border
 #chips button{position:relative;padding:.35em .55em;min-width:34px;font-size:13px;border-radius:10px;background:linear-gradient(#2b4673,#1a2d4d);box-shadow:0 2px 0 #0d1830}
 #chips button.on{background:linear-gradient(#ffd966,#e0a800);color:#2b1d00;box-shadow:0 2px 0 #8a6500,0 0 12px #ffc83d88}
 #chips button i{position:absolute;top:-8px;right:-6px;background:#1e88e5;color:#fff;border-radius:99px;font:700 10px system-ui;min-width:16px;height:16px;display:grid;place-items:center;font-style:normal;box-shadow:0 1px 3px #0008}
-#acts{display:flex;gap:12px;align-items:center}#acts button{min-width:120px;padding:.7em 1em;font-size:15px}
-#acts button#bPlay{min-width:230px}
+#acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center}#acts button{min-width:120px;padding:.7em 1em;font-size:15px}
+#acts button#bPlay{min-width:195px}
 #me{position:absolute;right:14px;bottom:2px}
 #side{background:linear-gradient(#101d35,#0a1325);border-left:1px solid #22385c;padding:14px 14px;overflow:auto}
 #side h4{margin:0 0 8px;color:#9db4d8;font-size:11px;letter-spacing:1.5px}#side hr{border:0;border-top:1px solid #22385c;margin:12px 0}
@@ -74,7 +74,7 @@ input,select{background:#0c1729;color:var(--ink);border:1px solid #34507d;border
 </style></head><body>
 
 <div id="menu">
- <div><h1>♠ Bluff ♦</h1><small>Play cards face-down, claim a rank, lie if you dare. First to empty their hand wins.</small></div>
+ <div><h1>♠ Bluff ♦</h1><small>Play 2 or more cards face-down, claim a rank, and bluff if you dare. First to empty their hand wins.</small></div>
  <div class="panel">
   <div class="row"><label>Your name</label><input id="name" maxlength="14" placeholder="Player"></div>
   <div class="row"><label>Players</label><select id="np"><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option></select></div>
@@ -88,13 +88,13 @@ input,select{background:#0c1729;color:var(--ink);border:1px solid #34507d;border
   <button id="mHost">Host a game</button>
   <div class="row"><input id="code" placeholder="Room code" maxlength="5" style="flex:1;text-transform:uppercase"><button id="mJoin">Join</button></div>
   <button id="mRe" class="gold" hidden></button></div>
- <div><small>Rules: only the player after you may call <b>Bluff!</b>. If the claim was false the liar takes the pile; if true, the caller does.</small></div>
+ <div><small>Rules: play <b>at least 2 cards</b> each turn. If you have 1 card, you may <b>Pass</b> or call <b>Bluff!</b>. Only the next player may challenge. Disconnected players have 60 seconds to return.</small></div>
 </div>
 
 <div id="game" hidden>
  <div id="stage"><canvas id="cv"></canvas><div id="seats"></div><div id="plaque"></div><div id="claim" hidden></div><div id="bubble" hidden></div><div id="banner" hidden></div>
   <div id="top"><div id="title">♠♥ BLUFF ♦♣<small id="sub"></small></div><div id="prompt"></div><div id="tb"><button id="bAbort" class="bad" hidden>Abort match</button><button id="bNew">New game</button><button id="bMenu">Menu</button></div></div>
-  <div id="bar"><div id="chips"></div><div id="acts"><button id="bClear">Clear</button><button id="bPlay" class="go">Play</button><button id="bBluff" class="bad">Bluff!</button><button id="bAcc" class="gold">Accept</button></div></div>
+  <div id="bar"><div id="chips"></div><div id="acts"><button id="bClear">Clear</button><button id="bPlay" class="go">Play</button><button id="bPass" class="gold" hidden>Pass</button><button id="bBluff" class="bad">Bluff!</button><button id="bAcc" class="gold">Accept</button></div></div>
   <div id="me"></div>
  </div>
  <aside id="side"><h4>GAME</h4><div id="info"></div><hr><h4>RECENT PLAYS</h4><div id="log"></div></aside>
@@ -104,7 +104,6 @@ input,select{background:#0c1729;color:var(--ink);border:1px solid #34507d;border
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 "use strict";
-"use strict";
 // ============================================================ ENGINE (no UI)
 const C=(n,k)=>{if(k<0||k>n)return 0;let r=1;for(let i=1;i<=k;i++)r=r*(n-k+i)/i;return r};
 const pmf=(N,g,d,i)=>{d=Math.min(d,N);g=Math.min(g,N);return(i<0||i>g||i>d||d-i>N-g)?0:C(g,i)*C(N-g,d-i)/C(N,d)};
@@ -113,79 +112,119 @@ const pick=a=>a[Math.random()*a.length|0];
 const HEADS_UP=30;   // a two-player game always ends after this many plays: both players can work out each other's cards
 class Engine{
  constructor(names,decks,classic,max){this.names=names;this.n=names.length;this.decks=decks;this.classic=classic;this.max=max|0;this.reset()}
- cap(){const c=[this.max,this.n===2?HEADS_UP:0].filter(Boolean);return c.length?Math.min(...c):0}   // plays after which the game ends (0 = never)
- reset(){this.limName='Play limit';this.hands=Array.from({length:this.n},()=>[]);this.pile=[];this.last=null;this.hist=[];this.req=1;this.turn=0;this.phase='lobby';
-  this.winner=null;this.kind='';this.msg='';this.plays=0;this.draw=[];this.lies=Array.from({length:this.n},()=>[0,0])}
- deal(){const d=[];for(let k=0;k<this.decks;k++)for(let r=1;r<14;r++)for(let s=0;s<4;s++)d.push([r,s]);
+ remaining(){return this.active.flatMap((ok,i)=>ok?[i]:[])}
+ next(p){for(let j=1;j<=this.n;j++){const i=(p+j)%this.n;if(this.active[i])return i}return p}
+ // After the game reaches two ACTIVE players, start a fresh 30-card-play clock.
+ duelPlays(){return this.duelStart===null?0:this.plays-this.duelStart}
+ cap(){const c=[this.max,this.duelStart===null?0:this.duelStart+HEADS_UP].filter(Boolean);return c.length?Math.min(...c):0}
+ reset(){this.limName='Play limit';this.hands=Array.from({length:this.n},()=>[]);this.active=Array(this.n).fill(true);
+  this.pile=[];this.last=null;this.hist=[];this.req=1;this.turn=0;this.phase='lobby';this.duelStart=this.n===2?0:null;
+  this.winner=null;this.kind='';this.msg='';this.plays=0;this.draw=[];this.lies=Array.from({length:this.n},()=>[0,0]);this.forfeits=[]}
+ deal(){const d=[];for(let k=0;k<this.decks;k++)for(let r=1;r<14;r++)for(let suit=0;suit<4;suit++)d.push([r,suit]);
   for(let i=d.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[d[i],d[j]]=[d[j],d[i]]}
   this.reset();d.forEach((c,i)=>this.hands[i%this.n].push(c));this.turn=Math.random()*this.n|0;this.phase='play'}
- pending(){return !!this.last&&this.hands[this.last.p].length===0}
+ pending(){return !!this.last&&this.active[this.last.p]&&this.hands[this.last.p].length===0}
  play(p,cards,claim){
   if(this.phase!=='play')return'The game is not running.';
-  if(p!==this.turn)return'It is not your turn.';
+  if(!this.active[p]||p!==this.turn)return'It is not your turn.';
   if(this.pending())return'You must call Bluff or accept.';
-  // input may come from the network: validate strictly, never throw
-  if(!Array.isArray(cards)||!cards.length||cards.length>this.hands[p].length||!Number.isInteger(claim)||claim<1||claim>13)return'Bad move.';
+  // Never trust client data. A play MUST contain at least two distinct cards from the hand.
+  if(!Array.isArray(cards)||cards.length<2)return'You must play at least 2 cards. With only 1 card, use Pass or Bluff.';
+  if(cards.length>this.hands[p].length||!Number.isInteger(claim)||claim<1||claim>13)return'Bad move.';
   const h=this.hands[p].slice(),taken=[];
   for(const c of cards){
-   if(!Array.isArray(c)||c.length!==2||!Number.isInteger(c[0])||!Number.isInteger(c[1]))return'Bad move.';
-   const i=h.findIndex(x=>x[0]===c[0]&&x[1]===c[1]);if(i<0)return'You do not have those cards.';taken.push(h.splice(i,1)[0])}
+   if(!Array.isArray(c)||c.length!==2||!Number.isInteger(c[0])||c[0]<1||c[0]>13||!Number.isInteger(c[1])||c[1]<0||c[1]>3)return'Bad move.';
+   const i=h.findIndex(x=>x[0]===c[0]&&x[1]===c[1]);if(i<0)return'You do not have those cards.';
+   taken.push(h.splice(i,1)[0])}
   if(this.classic&&claim!==this.req)return'You must claim the required rank.';
+  if(this.last&&!this.hist[this.hist.length-1].verdict)this.hist[this.hist.length-1].verdict='unchallenged';
   this.hands[p]=h;this.pile.push(...taken);this.last={p,cards:taken,claim};this.plays++;
   this.hist.push({id:this.plays,p,count:taken.length,claim,verdict:null});
-  this.turn=(p+1)%this.n;if(this.classic)this.req=this.req%13+1;
-  const cp=this.cap();if(cp&&this.plays>=cp)this.limit();return null}
+  this.turn=this.next(p);if(this.classic)this.req=this.req%13+1;
+  if(this.cap()&&this.plays>=this.cap())this.limit();return null}
  challenge(p){
-  if(this.phase!=='play'||p!==this.turn||!this.last)return'You cannot call Bluff now.';
+  if(this.phase!=='play'||!this.active[p]||p!==this.turn||!this.last)return'You cannot call Bluff now.';
   const L=this.last,truth=L.cards.every(c=>c[0]===L.claim),loser=truth?p:L.p;
   this.lies[L.p][1]++;if(!truth)this.lies[L.p][0]++;
   Object.assign(this.hist[this.hist.length-1],{verdict:truth?'true':'lie',taker:loser,revealed:L.cards.slice()});
   this.hands[loser].push(...this.pile);this.pile=[];this.last=null;
   if(truth&&this.hands[L.p].length===0){this.winner=L.p;this.kind='win';this.phase='over'}else this.turn=loser;return null}
  accept(p){
-  if(this.phase!=='play'||p!==this.turn||!this.pending())return'Nothing to accept.';
+  if(this.phase!=='play'||!this.active[p]||p!==this.turn||!this.pending())return'Nothing to accept.';
   this.hist[this.hist.length-1].verdict='accepted';this.winner=this.last.p;this.kind='win';this.phase='over';return null}
+ pass(p){
+  if(this.phase!=='play'||!this.active[p]||p!==this.turn)return'It is not your turn.';
+  if(this.pending())return'You must call Bluff or accept.';
+  if(this.hands[p].length!==1)return'Pass is only allowed when you have exactly 1 card.';
+  if(this.last&&!this.hist[this.hist.length-1].verdict)this.hist[this.hist.length-1].verdict='unchallenged';
+  this.last=null;this.turn=this.next(p);
+  if(this.classic)this.req=this.req%13+1;
+  if(this.remaining().every(i=>this.hands[i].length<2))this.limit('No one can play 2 cards');
+  return null}
+ eliminate(p){
+  if(this.phase!=='play'||!this.active[p])return false;
+  const wasTurn=this.turn===p,wasLast=this.last&&this.last.p===p,pending=this.pending();
+  this.active[p]=false;this.forfeits.push(p);this.hands[p]=[]; // forfeited cards leave the game, never awarded to an opponent
+  const left=this.remaining();
+  if(left.length===1){this.winner=left[0];this.kind='forfeit';this.phase='over';return true}
+  if(left.length===2&&this.duelStart===null)this.duelStart=this.plays;
+  if(wasLast||wasTurn){
+   if(this.last&&this.hist.length&&!this.hist[this.hist.length-1].verdict)this.hist[this.hist.length-1].verdict='unchallenged';
+   this.last=null;
+  }
+  if(wasTurn)this.turn=this.next(p);
+  // The last-card claim is accepted if the ONLY eligible challenger timed out.
+  if(wasTurn&&pending&&!wasLast&&this.active[this.hist[this.hist.length-1].p]){
+   const w=this.hist[this.hist.length-1].p;this.winner=w;this.kind='win';this.phase='over';this.hist[this.hist.length-1].verdict='accepted';return true}
+  if(left.every(i=>this.hands[i].length<2))this.limit('No one can play 2 cards');
+  return true}
  abort(msg){if(this.phase==='over')return;this.phase='over';this.winner=null;this.kind='abort';this.msg=msg||'The game was aborted.';
   const h=this.hist[this.hist.length-1];if(h&&!h.verdict)h.verdict='aborted'}
- limit(){const s=this.hands.map(h=>h.length),m=Math.min(...s),w=s.flatMap((x,i)=>x===m?[i]:[]);
-  this.phase='over';this.limName=(this.n===2&&(!this.max||HEADS_UP<=this.max))?'Two-player limit':'Play limit';if(w.length===1){this.winner=w[0];this.kind='limit'}else{this.winner=null;this.kind='draw';this.draw=w}}
+ limit(reason){const ids=this.remaining(),m=Math.min(...ids.map(i=>this.hands[i].length));this.draw=ids.filter(i=>this.hands[i].length===m);
+  this.phase='over';this.limName=reason||(this.duelStart!==null&&this.duelPlays()>=HEADS_UP?'Two-player 30-play limit':'Play limit');
+  if(this.draw.length===1){this.winner=this.draw[0];this.kind='limit'}else{this.winner=null;this.kind='draw'}}
  view(p){
   const nm=this.names.map((x,i)=>i===p?'You':x||'Waiting…');let end='';
-  if(this.phase==='over')end=this.kind==='abort'?this.msg:this.kind==='draw'?this.limName+' reached – draw between '+this.draw.map(i=>nm[i]).join(' and ')
-   :this.kind==='limit'?(this.winner===p?this.limName+' reached – you hold the fewest cards. You win! 🎉':`${this.limName} reached – ${nm[this.winner]} holds the fewest cards and wins`)
+  if(this.phase==='over')end=this.kind==='abort'?this.msg:this.kind==='draw'?this.limName+' – draw between '+this.draw.map(i=>nm[i]).join(' and ')
+   :this.kind==='limit'?(this.winner===p?this.limName+' – you hold the fewest cards. You win! 🎉':`${this.limName} – ${nm[this.winner]} holds the fewest cards and wins`)
+   :this.kind==='forfeit'?(this.winner===p?'You win! All opponents have left. 🎉':nm[this.winner]+' wins – all others left')
    :this.winner===p?'You win! 🎉':nm[this.winner]+' wins 😅';
   return{phase:this.phase,names:nm,me:p,hand:this.hands[p].slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]),counts:this.hands.map(h=>h.length),pile:this.pile.length,
    last:this.last&&{p:this.last.p,count:this.last.cards.length,claim:this.last.claim},hist:this.hist.slice(-14).map(e=>({...e})),req:this.req,turn:this.turn,decks:this.decks,
-   classic:this.classic,end,kind:this.kind,winner:this.winner,pending:this.pending(),plays:this.plays,max:this.cap(),offline:[],grace:0}}
- // ---------- bots (use only public information + their own hand)
+   classic:this.classic,end,kind:this.kind,winner:this.winner,pending:this.pending(),plays:this.plays,max:this.cap(),offline:[],grace:0,
+   active:this.active.slice(),duel:this.duelStart!==null,duelPlays:this.duelPlays(),forfeits:this.forfeits.slice()}}
+ // ---------- bots (public information + their own hand only)
  rc(p){const c={};for(const[r]of this.hands[p])c[r]=(c[r]||0)+1;return c}
  lieRate(p){const[l,s]=this.lies[p];return(l+.9)/(s+6)}
  botStep(){const b=this.turn;
   if(this.last){if(this.botChallenge(b)){this.challenge(b);return}if(this.pending()){this.accept(b);return}}
+  if(this.hands[b].length===1){this.pass(b);return}
   const[c,k]=this.botPlay(b);this.play(b,c,k)}
  botChallenge(b){
   const L=this.last,k=L.cards.length,top=4*this.decks,own=this.rc(b)[L.claim]||0;
-  if(own+k>top||this.pending())return true;            // impossible claim / accepting a winner is never better
+  if(own+k>top||this.pending())return true;
   const N=52*this.decks-this.hands[b].length,d=this.hands[L.p].length+k,g=top-own;
-  if(this.classic){ // forced rank: holder plays all X copies, otherwise must dump 1-2 cards
-   const hon=pmf(N,g,d,k),liar=pmf(N,g,d,0)*({1:.75,2:.25}[k]??.05)+.04*atLeast(N,g,d,1);
+  if(this.classic){
+   const hon=pmf(N,g,d,k),liar=pmf(N,g,d,0)*(.25)+.04*atLeast(N,g,d,1);
    let pl=hon+liar>0?1-hon/(hon+liar):1;pl=Math.min(1,pl*(.7+1.2*this.lieRate(L.p)));
    let p=pl*.35/(1+this.pile.length/8);if(this.hands[L.p].length<=2)p+=.15;return Math.random()<Math.min(Math.max(p,.03),.9)}
   const sus=1-atLeast(N,g,d,k);let p=(.05+.4*sus*sus)*(.6+1.6*this.lieRate(L.p));
   if(this.hands[L.p].length<=2)p+=.15;if(this.pile.length>12)p*=.7;return Math.random()<Math.min(Math.max(p,.03),.85)}
- turnsUntil(r){for(let i=1;i<14;i++)if((this.req-1+i*this.n)%13+1===r)return i;return 14}
+ turnsUntil(r){for(let i=1;i<14;i++)if((this.req-1+i*this.remaining().length)%13+1===r)return i;return 14}
  dump(b,k){const c=this.rc(b),rs=Object.keys(c).map(Number).sort((x,y)=>c[x]-c[y]||(this.classic?this.turnsUntil(y)-this.turnsUntil(x):0)||Math.random()-.5),out=[];
   for(const r of rs){for(const card of this.hands[b])if(card[0]===r&&out.length<k)out.push(card);if(out.length>=k)break}return out}
  botPlay(b){
   const c=this.rc(b),total=this.hands[b].length,top=4*this.decks,of=r=>this.hands[b].filter(x=>x[0]===r);
   if(this.classic){const m=c[this.req]||0;let cards;
-   if(m){cards=of(this.req);if(total>m+1&&Math.random()<.1)cards.push(pick(this.hands[b].filter(x=>x[0]!==this.req)))}
-   else cards=this.dump(b,Math.max(1,total>1?Math.min(total-1,pick([1,1,1,2])):1));
+   if(m>=2){cards=of(this.req);if(total>m+1&&Math.random()<.1)cards.push(pick(this.hands[b].filter(x=>x[0]!==this.req)))}
+   else if(m===1){cards=of(this.req).concat(this.dump(b,2).filter(x=>x[0]!==this.req).slice(0,1));
+    if(cards.length<2)cards=of(this.req).concat(this.hands[b].filter(x=>x[0]!==this.req).slice(0,1))}
+   else cards=this.dump(b,Math.min(total,pick([2,2,2,3])));
    return[cards,this.req]}
   const best=Math.max(...Object.values(c)),r=+pick(Object.keys(c).filter(x=>c[x]===best));
-  if(best===total||total===1||Math.random()>=.3)return[of(r),r];       // honest
-  const k=Math.min(total-1,pick([1,1,2,3])),cards=this.dump(b,k),used=cards.map(x=>x[0]);
-  let o=[...Array(13).keys()].map(x=>x+1).filter(x=>!used.includes(x));const ok=o.filter(x=>(c[x]||0)+k<=top);return[cards,pick(ok.length?ok:o)]}
+  if(best>=2&&(best===total||Math.random()>=.3))return[of(r),r];
+  const k=Math.min(total,pick([2,2,3])),cards=this.dump(b,k),used=cards.map(x=>x[0]);
+  let o=[...Array(13).keys()].map(x=>x+1).filter(x=>!used.includes(x));const ok=o.filter(x=>(c[x]||0)+k<=top);return[cards,pick(ok.length?ok:o.length?o:[r])]}
 }
 // ============================================================ UI helpers
 const $=s=>document.querySelector(s),RN=r=>({1:'Ace',11:'Jack',12:'Queen',13:'King'}[r]||['','','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten'][r]);
@@ -304,7 +343,7 @@ const myTurnUI=()=>V&&V.phase==='play'&&V.turn===V.me&&!paused()&&!status&&!rev;
 function spawnFly(from,to,o){flyers.push({t0:now()+(o.delay||0),dur:o.dur||.5,from,to,rot:o.rot||0,face:o.face||null,arc:o.arc===undefined?70:o.arc})}
 function takerPoint(i){return i===V.me?[W/2,H-BOT-cardH()*.4]:geo[i].fan}
 function applyView(v,fresh){
- const old=V;V=v;if(v.offline&&v.offline.length)pauseUntil=Date.now()+v.grace*1000;
+ const old=V;V=v;if(v.offline&&v.offline.length)pauseUntil=Date.now()+v.grace*1000;else pauseUntil=0;
  if(v.classic)claim=v.req;else if(!old||old.phase!=='play'||fresh)claim=1;
  geometry();const changed=!old||JSON.stringify(old.hand)!==JSON.stringify(v.hand);
  if(changed){sel=new Set();syncHand(fresh||!old)}
@@ -375,20 +414,21 @@ function prompt(){const v=V;if(status)return'Connection lost – trying to get y
  if(rev)return'Bluff called!';if(v.phase==='lobby')return ctl.lobbyHint||'Waiting for players…';if(v.phase==='over')return'Game over';
  if(v.turn!==v.me)return v.last?`${v.names[v.turn]} is deciding… (${v.names[v.last.p]} claimed ${claimTxt(v.last.count,v.last.claim)})`:`${v.names[v.turn]} is playing…`;
  if(v.pending)return`${v.names[v.last.p]} played their last cards! Call Bluff, or Accept and let them win.`;
- if(v.last)return`Your turn – ${v.names[v.last.p]} claims ${claimTxt(v.last.count,v.last.claim)}. Call Bluff, or play your own cards.`;
- return'Your turn – you start the round. Select cards, pick a claim, then Play.'}
+ if(v.hand.length===1)return'Only 1 card remains: call Bluff on the last play, or press Pass (single-card plays are forbidden).';
+ if(v.last)return`Your turn – ${v.names[v.last.p]} claims ${claimTxt(v.last.count,v.last.claim)}. Call Bluff, or play 2+ cards.`;
+ return'Your turn – select at least 2 cards, choose your claim, then Play.'}
 function ui(){if(!V||!W)return;const v=V,n=v.names.length;if(geo.length!==n)geometry();
  $('#seats').innerHTML=v.names.map((nm,i)=>{if(i===v.me)return'';const off=v.offline&&v.offline.includes(i),turn=v.turn===i&&v.phase==='play'&&!off&&!rev&&!paused();
-  const sub=v.phase==='lobby'?(nm==='Waiting…'?'waiting…':'joined'):off?'disconnected':turn?'thinking…':v.counts[i]+' cards',[x,y]=geo[i].badge;
-  return`<div class="seat ${turn?'turn':''} ${off?'off':''}" style="left:${x}px;top:${y}px"><u style="background:${COL[i%6]}">${esc(nm[0]).toUpperCase()}</u><span><b>${esc(nm)}</b><i>${sub}</i></span></div>`}).join('');
+  const sub=v.phase==='lobby'?(nm==='Waiting…'?'waiting…':'joined'):(v.active&&v.active[i]===false)?'eliminated':off?'reconnecting…':turn?'thinking…':v.counts[i]+' cards',[x,y]=geo[i].badge;
+  return`<div class="seat ${turn?'turn':''} ${off?'off':''} ${v.active&&v.active[i]===false?'out':''}" style="left:${x}px;top:${y}px"><u style="background:${COL[i%6]}">${esc(nm[0]).toUpperCase()}</u><span><b>${esc(nm)}</b><i>${sub}</i></span></div>`}).join('');
  const myT=v.turn===v.me&&v.phase==='play'&&!paused()&&!rev;
  $('#me').innerHTML=`<div class="seat ${myT?'turn':''}" style="position:static;transform:none"><u style="background:${COL[v.me%6]}">Y</u><span><b>You</b><i>${myT?'your turn':v.counts[v.me]+' cards'}</i></span></div>`;
  const pp=P(0,150,0),pl=$('#plaque');pl.style.left=pp[0]+'px';pl.style.top=pp[1]+'px';pl.style.display=rev?'none':'';
  pl.innerHTML=v.phase==='lobby'?'<b>Lobby</b><small>Dealing starts when every seat is filled</small>':`<b>${v.last?esc(v.names[v.last.p])+' claims '+claimTxt(v.last.count,v.last.claim):'New round'}</b><small>${v.pile?v.pile+(v.pile===1?' card':' cards')+' in the pile':'no claim yet'}${v.classic&&v.phase==='play'?' · required: '+RN(v.req)+'s':''}</small>`;
  $('#sub').textContent=` ${v.decks} deck${v.decks>1?'s':''} · ${v.classic?'classic order':'free choice'}`;
- $('#info').innerHTML=`${52*v.decks} cards · each rank ×${4*v.decks}<br>Rank rule: ${v.classic?'classic order':'free choice'}${v.classic&&v.phase==='play'?`<br><b>You must claim: ${RN(v.req)}s</b>`:''}${v.max?`<br>Plays: ${v.plays} / ${v.max}`:''}`;
+ $('#info').innerHTML=`${52*v.decks} cards · each rank ×${4*v.decks}<br>Rank rule: ${v.classic?'classic order':'free choice'}${v.classic&&v.phase==='play'?`<br><b>You must claim: ${RN(v.req)}s</b>`:''}${v.duel?`<br><b>Final two: ${v.duelPlays} / ${HEADS_UP} plays</b>`:v.max?`<br>Plays: ${v.plays} / ${v.max}`:''}${v.forfeits&&v.forfeits.length?`<br>Out: ${v.forfeits.map(i=>esc(v.names[i])).join(', ')}`:''}`;
  $('#log').innerHTML=v.hist.length?v.hist.slice().reverse().map(e=>{const t=`<b>${esc(v.names[e.p])}</b> ${claimTxt(e.count,e.claim)}`;
-  const r=e.verdict==='lie'?`<br>LIE! ${e.revealed.map(cs).join(' ')}<br><small>${esc(takes(v.names[e.taker]))} the pile</small>`:e.verdict==='true'?`<br>True – <small>${esc(takes(v.names[e.taker]))} the pile</small>`:e.verdict==='accepted'?'<br><small>nobody called Bluff</small>':e.verdict==='aborted'?'<br><small>game ended</small>':'';
+  const r=e.verdict==='lie'?`<br>LIE! ${e.revealed.map(cs).join(' ')}<br><small>${esc(takes(v.names[e.taker]))} the pile</small>`:e.verdict==='true'?`<br>True – <small>${esc(takes(v.names[e.taker]))} the pile</small>`:e.verdict==='accepted'?'<br><small>nobody called Bluff</small>':e.verdict==='unchallenged'?'<br><small>unchallenged</small>':e.verdict==='aborted'?'<br><small>game ended</small>':'';
   return`<div class="${e.verdict==='lie'||e.verdict==='true'?e.verdict:''}">${t}${r}</div>`}).join(''):'<small>No plays yet.<br>The first player starts the round.</small>';
  const cnt={};v.hand.forEach(c=>cnt[c[0]]=(cnt[c[0]]||0)+1);
  $('#chips').innerHTML='<small>I CLAIM</small>'+[...Array(13).keys()].map(i=>i+1).map(r=>`<button data-r="${r}" class="${r===claim?'on':''}" ${v.classic||!myTurn()?'disabled':''}>${RS(r)}${cnt[r]?`<i>${cnt[r]}</i>`:''}</button>`).join('');
@@ -399,7 +439,7 @@ function ui(){if(!V||!W)return;const v=V,n=v.names.length;if(geo.length!==n)geom
    <div class="row">${ctl&&ctl.canNew?'<button class="go" id="oAgain">Play again</button>':''}<button id="oMenu">Menu</button></div></div>`;
    const a=$('#oAgain');if(a)a.onclick=()=>act(()=>ctl.newGame());$('#oMenu').onclick=leave;if(v.winner===v.me)burst()},v.kind==='win'?900:0)}
  else{clearTimeout(endTimer);o.hidden=true}
- $('#prompt').textContent=prompt()}
+ $('#prompt').textContent=prompt()+(v.phase==='play'&&v.duel?` · FINAL TWO ${v.duelPlays}/${HEADS_UP}`:'')}
 let claimKey='';
 function miniCards(r,k){const n=Math.min(k,4);return Array.from({length:n},()=>`<i class="mc ${''}">${RS(r)}</i>`).join('')}
 function claimUI(){const v=V,c=$('#claim'),b=$('#bubble'),L=v.phase==='play'&&v.last;
@@ -414,13 +454,13 @@ function claimUI(){const v=V,c=$('#claim'),b=$('#bubble'),L=v.phase==='play'&&v.
  b.hidden=!!rev;b.style.left=x+'px';b.style.top=y+'px';b.style.borderColor=col;
  b.innerHTML=`<div class="mcs">${miniCards(v.last.claim,v.last.count)}</div><span>×${v.last.count}</span>`;
  if(fresh&&!b.hidden){b.style.animation='none';void b.offsetWidth;b.style.animation=''}}
-function btns(){const v=V,m=myTurn();$('#bPlay').disabled=!m||v.pending||!sel.size;$('#bBluff').disabled=!m||!v.last;$('#bAcc').disabled=!m||!v.pending;$('#bAcc').hidden=!(v.pending&&v.phase==='play');
+function btns(){const v=V,m=myTurn();$('#bPlay').disabled=!m||v.pending||sel.size<2;$('#bPlay').textContent=sel.size?`Play ${sel.size} card${sel.size===1?'':'s'}`:'Play (2+)';$('#bPass').hidden=!(v.phase==='play'&&v.hand.length===1&&!v.pending);$('#bPass').disabled=!m;$('#bBluff').disabled=!m||!v.last;$('#bAcc').disabled=!m||!v.pending;$('#bAcc').hidden=!(v.pending&&v.phase==='play');
  $('#bClear').disabled=!sel.size;$('#bAbort').hidden=!(ctl.isHost&&paused());$('#bNew').hidden=!ctl.canNew||(ctl.isHost&&v.phase==='play')}
-setInterval(()=>{if(V&&$('#game').hidden===false&&(paused()||status))$('#prompt').textContent=prompt()},1000);
+setInterval(()=>{if(V&&$('#game').hidden===false&&(paused()||status))$('#prompt').textContent=prompt()+(V.phase==='play'&&V.duel?` · FINAL TWO ${V.duelPlays}/${HEADS_UP}`:'')},1000);
 
 // ============================================================ actions
 function act(fn){const e=fn();if(e)toast(e)}
-function doPlay(){if(!myTurn()||V.pending||!sel.size)return;const idx=[...sel],cards=idx.map(i=>V.hand[i]),backup=new Set(sel);
+function doPlay(){if(!myTurn()||V.pending)return;if(sel.size<2){toast('Select at least 2 cards. With only 1 card, use Pass or Bluff.');return}const idx=[...sel],cards=idx.map(i=>V.hand[i]),backup=new Set(sel);
  pendingFly=idx.map(i=>({x:hv[i].x,y:hv[i].y-hv[i].lift,rot:hv[i].rot,c:hv[i].c}));
  const e=ctl.play(cards,claim);if(e){pendingFly=null;toast(e);return}ctl.backup=backup;sel=new Set();ui()}
 function leave(){if(ctl)ctl.close();ctl=null;V=null;status=null;rev=null;queue=[];flyers=[];hv=[];geo=[];sel=new Set();clearTimeout(endTimer);$('#overlay').hidden=true;$('#game').hidden=true;$('#menu').hidden=false;history.replaceState(null,'',location.pathname);initRe()}
@@ -433,10 +473,11 @@ cv.addEventListener('contextmenu',e=>{if(!V||!myTurn())return;const i=hitHand(..
 $('#chips').onclick=e=>{const b=e.target.closest('button');if(b&&!b.disabled){claim=+b.dataset.r;ui()}};
 $('#bClear').onclick=()=>{sel=new Set();ui();wake()};$('#bPlay').onclick=doPlay;
 $('#bBluff').onclick=()=>act(()=>ctl.bluff());
+$('#bPass').onclick=()=>act(()=>ctl.pass());
 $('#bAcc').onclick=()=>{const who=V.last?V.names[V.last.p]:'them';if(ask(`Accept and let ${who} win the game?`))act(()=>ctl.accept())};
 $('#bNew').onclick=()=>{if(V.phase==='play'&&!ask('Abort the current game and deal a new one?'))return;act(()=>ctl.newGame())};
 $('#bAbort').onclick=()=>{if(ask('End the match for everybody?'))act(()=>ctl.abortMatch())};
-$('#bMenu').onclick=()=>{if(V.phase==='play'&&!status&&!ask('Leave this game? '+(ctl.isHost?'The match ends for everybody.':'The others will be told you left.')))return;if(ctl.isClient)ctl.leaving=true;leave()};
+$('#bMenu').onclick=()=>{if(V.phase==='play'&&!status&&!ask('Leave this game? '+(ctl.isHost?'The match ends for everybody.':'Your seat will be reserved for 60 seconds, then eliminated.')))return;if(ctl.isClient)ctl.leaving=true;leave()};
 addEventListener('keydown',e=>{if($('#game').hidden||!V||e.repeat||/INPUT|SELECT/.test(e.target.tagName))return;
  if(e.key==='Enter'||e.key===' '){if(e.target.closest&&e.target.closest('button'))return;e.preventDefault();doPlay()}   // Enter/Space only Play, never Accept
  else if(e.key==='b'||e.key==='B'){if(!myTurn()||!V.last)return;if(Date.now()<armed){armed=0;act(()=>ctl.bluff())}else{armed=Date.now()+2000;toast('Press B again to call Bluff')}}
@@ -445,28 +486,31 @@ addEventListener('keydown',e=>{if($('#game').hidden||!V||e.repeat||/INPUT|SELECT
 function showGame(){$('#menu').hidden=true;$('#game').hidden=false;resize()}
 function opts(){return{name:$('#name').value,np:+$('#np').value,nd:+$('#nd').value,classic:$('#classic').checked,lim:Math.max(0,Math.min(2000,+$('#lim').value||0))}}
 class Local{
- constructor(o){let np=o.np;if(o.classic&&np<3){np=3;$('#np').value=3;alert('Classic order against the CPU needs at least 3 players (you + 2 bots), so the player count was set to 3. Free choice works with 2.')}
+ constructor(o){let np=o.np;
   this.e=new Engine(['You',...Array.from({length:np-1},(_,i)=>'Bot '+(i+1))],o.nd,o.classic,o.lim);this.canNew=true;this.tk=0}
  start(){showGame();this.newGame()}
  sync(){feed(this.e.view(0));const t=++this.tk,go=()=>{if(t!==this.tk||this.e.phase!=='play'||this.e.turn===0)return;if(rev){setTimeout(go,250);return}this.e.botStep();this.sync()};if(this.e.phase==='play'&&this.e.turn!==0)setTimeout(go,1500)}
  do(r){if(!r)this.sync();return r}
- play(c,k){return this.do(this.e.play(0,c,k))}bluff(){return this.do(this.e.challenge(0))}accept(){return this.do(this.e.accept(0))}
+ play(c,k){return this.do(this.e.play(0,c,k))}bluff(){return this.do(this.e.challenge(0))}accept(){return this.do(this.e.accept(0))}pass(){return this.do(this.e.pass(0))}
  newGame(){this.e.deal();this.sync()}close(){this.tk++}}
 // ---- online: host-authoritative over WebRTC (PeerJS).  Messages: hello/welcome/view/notice/reject/ping/bye/error
-const GRACE=120,HEART=3000,TIMEOUT=12000,PFX='bluffgame-',ALPHA='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const GRACE=60,HEART=3000,TIMEOUT=12000,PFX='bluffgame-',ALPHA='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const tok=()=>[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,'0')).join('');
 const send=(c,m)=>{try{if(c&&c.open)c.send(m)}catch(e){}};
 class Host{
  constructor(o){this.isHost=true;this.canNew=true;this.np=o.np;this.grace=GRACE;this.e=new Engine([cleanName(o.name,'Host'),...Array(o.np-1).fill(null)],o.nd,o.classic,o.lim);
-  this.conns={};this.seatOf=new Map();this.pend=new Map();this.rx=new Map();this.joined=new Set([0]);this.tokens={};this.off={};this.lastPing=0;this.tries=0;this.open()}
+  this.conns={};this.seatOf=new Map();this.pend=new Map();this.rx=new Map();this.joined=new Set([0]);this.tokens={};this.off={};this.lastPing=0;this.tries=0;this.closed=false;this.open()}
  open(){this.code=Array.from({length:5},()=>ALPHA[Math.random()*ALPHA.length|0]).join('');
-  this.peer=new Peer(PFX+this.code);
-  this.peer.on('error',er=>{if(er.type==='unavailable-id'&&this.tries++<5)this.open();else toast('Network error: '+er.type)});
-  this.peer.on('open',()=>{this.lobbyHint=`Room code ${this.code} – friends open ${location.origin}${location.pathname}?room=${this.code}`;if(V)feed(this.vw(0))});
-  this.peer.on('connection',c=>{if(this.pend.size>=8){c.close();return}this.pend.set(c,Date.now());this.rx.set(c,Date.now());
+  const p=new Peer(PFX+this.code);this.peer=p;
+  p.on('error',er=>{if(this.closed||this.peer!==p)return;
+   if(er.type==='unavailable-id'&&this.tries++<5){try{p.destroy()}catch(e){}this.open()}
+   else toast('Room network error: '+er.type)});
+  p.on('open',()=>{if(this.closed)return;this.lobbyHint=`Room code ${this.code} – friends open ${location.origin}${location.pathname}?room=${this.code}`;
+   history.replaceState(null,'','?room='+this.code);if(V)feed(this.vw(0))});
+  p.on('connection',c=>{if(this.closed||this.pend.size>=8){c.close();return}this.pend.set(c,Date.now());this.rx.set(c,Date.now());
    c.on('data',m=>{try{this.handle(c,m)}catch(e){console.error(e);send(c,{t:'reject',m:'The host could not process that message.'})}});
    c.on('close',()=>this.dropped(c));c.on('error',()=>this.dropped(c))})}
- start(){showGame();this.timer=setInterval(()=>this.tick(),1000);this.sync();history.replaceState(null,'','?room='+this.code)}
+ start(){showGame();this.timer=setInterval(()=>this.tick(),1000);this.sync()}
  paused(){return this.e.phase==='play'&&Object.keys(this.off).length>0}
  offNames(){return Object.keys(this.off).map(s=>this.e.names[s]||'Player '+(+s+1)).join(', ')}
  vw(s){const v=this.e.view(s);if(this.paused()){v.offline=Object.keys(this.off).map(Number).sort();v.grace=Math.max(0,Math.min(...Object.values(this.off))-Date.now())/1000}return v}
@@ -475,76 +519,101 @@ class Host{
  handle(c,m){if(!m||typeof m!=='object')return;this.rx.set(c,Date.now());const t=m.t,seat=this.seatOf.get(c);
   if(t==='ping')return;
   if(seat===undefined){if(t==='hello')this.hello(c,m);return}
-  if(!['play','bluff','accept'].includes(t))return;
+  if(t==='leave'){this.dropped(c);try{c.close()}catch(e){}return}
+  if(!['play','bluff','accept','pass'].includes(t))return;
   if(this.e.phase!=='play')return send(c,{t:'reject',m:'The game is not running.'});
   if(this.paused())return send(c,{t:'reject',m:'The game is paused: waiting for '+this.offNames()+'.'});
-  const er=t==='play'?this.e.play(seat,m.cards,m.claim):t==='bluff'?this.e.challenge(seat):this.e.accept(seat);
+  const er=t==='play'?this.e.play(seat,m.cards,m.claim):t==='bluff'?this.e.challenge(seat):t==='pass'?this.e.pass(seat):this.e.accept(seat);
   er?send(c,{t:'reject',m:er}):this.sync()}
- seatFor(token){if(typeof token!=='string'||!token||token.length>64)return -1;for(const s in this.tokens)if(this.joined.has(+s)&&this.tokens[s]===token)return+s;return -1}
+ seatFor(token){if(typeof token!=='string'||!token||token.length>64)return -1;
+  for(const s in this.tokens)if(this.joined.has(+s)&&this.e.active[+s]&&this.tokens[s]===token){
+   if(this.off[s]&&Date.now()>=this.off[s])return -1;return+s}return -1}
  welcome(c,s,res){send(c,{t:'welcome',i:s,n:this.np,d:this.e.decks,cl:this.e.classic,token:this.tokens[s],res,grace:this.grace})}
  hello(c,m){const seat=this.seatFor(m.token);if(seat>=0)return this.rejoin(c,seat);
   const refuse=x=>{send(c,{t:'error',m:x});setTimeout(()=>c.close(),300)};
-  if(this.e.phase!=='lobby')return refuse(m.token?'That session is no longer available.':'This game is full or already started.');
+  if(this.e.phase!=='lobby')return refuse(m.token?'That seat expired. The 60-second reconnect window has ended.':'This game is full or already started.');
   const free=[...Array(this.np).keys()].filter(s=>s&&!this.joined.has(s));if(!free.length)return refuse('This game is full.');
   const s=free[0];this.pend.delete(c);this.conns[s]=c;this.seatOf.set(c,s);this.e.names[s]=cleanName(m.name,'Player '+(s+1),this.e.names);
   this.joined.add(s);this.tokens[s]=tok();this.welcome(c,s,false);if(this.joined.size===this.np)this.e.deal();this.sync()}
  rejoin(c,s){const old=this.conns[s];if(old&&old!==c){this.seatOf.delete(old);this.rx.delete(old);try{old.close()}catch(e){}}
-  this.pend.delete(c);this.conns[s]=c;this.seatOf.set(c,s);const was=delete this.off[s]&&true;this.welcome(c,s,true);
-  const n=this.e.names[s];this.note(this.paused()?`${n} is back. Still waiting for ${this.offNames()}.`:`${n} reconnected – the game continues.`);this.sync()}
- dropped(c){this.pend.delete(c);this.rx.delete(c);const s=this.seatOf.get(c);if(s===undefined)return;this.seatOf.delete(c);if(this.conns[s]===c)delete this.conns[s];
+  this.pend.delete(c);this.conns[s]=c;this.seatOf.set(c,s);delete this.off[s];this.welcome(c,s,true);
+  const n=this.e.names[s];this.note(this.paused()?`${n} reconnected. Still waiting for ${this.offNames()}.`:`${n} reconnected – play resumes.`);this.sync()}
+ dropped(c){this.pend.delete(c);const lastSeen=this.rx.get(c)||Date.now();this.rx.delete(c);const s=this.seatOf.get(c);if(s===undefined)return;
+  this.seatOf.delete(c);if(this.conns[s]===c)delete this.conns[s];
   const n=this.e.names[s]||'Player '+(s+1);
-  if(this.e.phase==='play'){this.off[s]=Date.now()+this.grace*1000;this.note(`${n} disconnected. The game is paused for up to ${this.grace} s while they reconnect.`)}
+  if(this.e.phase==='play'&&this.e.active[s]){
+   if(!this.off[s]){this.off[s]=lastSeen+this.grace*1000;this.note(`${n} disconnected. Paused for ${this.grace} seconds for a possible rejoin.`)}}
   else{this.joined.delete(s);delete this.tokens[s];if(this.e.phase==='lobby')this.e.names[s]=null}
   this.sync()}
- tick(){const now=Date.now();
-  for(const[c,t]of this.pend)if(now-t>10000){c.close();this.dropped(c)}                         // never said hello
-  for(const s in this.conns)if(now-(this.rx.get(this.conns[s])||now)>TIMEOUT){const c=this.conns[s];try{c.close()}catch(e){}this.dropped(c)} // silently dead
-  if(now-this.lastPing>=HEART){this.lastPing=now;for(const s in this.conns)send(this.conns[s],{t:'ping'})}
-  if(this.paused()&&Object.values(this.off).some(d=>now>=d))this.abort('Match aborted: '+Object.keys(this.off).filter(s=>now>=this.off[s]).map(s=>this.e.names[s]).join(', ')+' did not reconnect in time.')}
- abort(t){this.e.abort(t);for(const s in this.off){this.joined.delete(+s);delete this.tokens[s]}this.off={};this.sync()}
+ expire(s){if(!this.off[s]||Date.now()<this.off[s])return;
+  const n=this.e.names[s];delete this.off[s];this.joined.delete(+s);delete this.tokens[s];
+  const c=this.conns[s];if(c){this.seatOf.delete(c);this.rx.delete(c);delete this.conns[s];send(c,{t:'error',m:'Your 60-second reconnect window expired.'});try{c.close()}catch(e){}}
+  if(this.e.phase==='play'){this.e.eliminate(+s);this.note(`${n} did not return in 60 seconds and is eliminated. ${this.e.remaining().length} players remain.`)}
+  else this.e.names[s]=null;
+  this.sync()}
+ tick(){const t=Date.now();
+  for(const[c,when]of this.pend)if(t-when>10000){this.pend.delete(c);this.rx.delete(c);try{c.close()}catch(e){}}
+  for(const s in this.conns)if(t-(this.rx.get(this.conns[s])||t)>TIMEOUT){const c=this.conns[s];this.dropped(c);try{c.close()}catch(e){}}
+  if(t-this.lastPing>=HEART){this.lastPing=t;for(const s in this.conns)send(this.conns[s],{t:'ping'})}
+  for(const s of Object.keys(this.off))if(t>=this.off[s])this.expire(s)}
+ abort(t){this.e.abort(t);this.off={};this.sync()}
  g(){return this.paused()?'The game is paused: waiting for '+this.offNames()+'.':null}
  do(r){if(!r)this.sync();return r}
- play(c,k){return this.g()||this.do(this.e.play(0,c,k))}bluff(){return this.g()||this.do(this.e.challenge(0))}accept(){return this.g()||this.do(this.e.accept(0))}
+ play(c,k){return this.g()||this.do(this.e.play(0,c,k))}bluff(){return this.g()||this.do(this.e.challenge(0))}
+ accept(){return this.g()||this.do(this.e.accept(0))}pass(){return this.g()||this.do(this.e.pass(0))}
  abortMatch(){if(this.e.phase!=='play')return'There is no running match.';this.abort('The host ended the match.')}
  newGame(){if(this.paused())return this.g();for(let s=1;s<this.np;s++)if(!this.joined.has(s))this.e.names[s]=null;
   if(this.joined.size===this.np)this.e.deal();else this.e.reset();this.sync()}
- close(){clearInterval(this.timer);for(const s in this.conns)send(this.conns[s],{t:'bye',m:'The host closed the game.'});setTimeout(()=>{try{this.peer.destroy()}catch(e){}},400)}}
+ close(){this.closed=true;clearInterval(this.timer);for(const s in this.conns)send(this.conns[s],{t:'bye',m:'The host closed the game.'});
+  setTimeout(()=>{try{this.peer.destroy()}catch(e){}},400)}
+}
 class Client{
  constructor(code,name){this.isClient=true;this.code=code;this.name=name;this.st='connecting';this.hasWin=false;this.token=null;this.grace=GRACE;this.att=0;
-  try{const s=JSON.parse(localStorage.bluffSession);if(s.code===code&&Date.now()-s.t<36e5)this.token=s.token}catch(e){}
+  try{const s=JSON.parse(localStorage.bluffSession);if(s.code===code&&Date.now()-s.t<GRACE*1000)this.token=s.token}catch(e){}
   this.go()}
- start(){showGame();toast('Connecting to room '+this.code+'…');feed({phase:'lobby',names:['You'],me:0,hand:[],counts:[0],pile:0,last:null,hist:[],req:1,turn:0,decks:1,classic:false,end:'',pending:false,plays:0,max:0,offline:[],grace:0});this.lobbyHint='Connecting…'}
+ start(){showGame();toast('Connecting to room '+this.code+'…');feed({phase:'lobby',names:['You'],me:0,hand:[],counts:[0],pile:0,last:null,hist:[],req:1,turn:0,decks:1,classic:false,end:'',pending:false,plays:0,max:0,offline:[],grace:0,active:[true],duel:false,duelPlays:0,forfeits:[]});this.lobbyHint='Connecting…'}
  go(){this.drop();const p=this.peer=new Peer();clearTimeout(this.ct);this.ct=setTimeout(()=>this.failed(),9000);
-  p.on('error',()=>this.failed());
-  p.on('open',()=>{const c=this.conn=p.connect(PFX+this.code,{reliable:true});
-   c.on('open',()=>{this.rx=Date.now();send(c,{t:'hello',name:this.name,token:this.token})});
-   c.on('data',m=>{this.rx=Date.now();try{this.msg(m)}catch(e){console.error(e)}});
-   c.on('close',()=>{if(c===this.conn)this.lost()});c.on('error',()=>{})})}
+  p.on('error',()=>{if(this.peer===p)this.failed()});
+  p.on('open',()=>{if(this.peer!==p)return;const c=this.conn=p.connect(PFX+this.code,{reliable:true});
+   c.on('open',()=>{if(this.conn!==c)return;this.rx=Date.now();send(c,{t:'hello',name:this.name,token:this.token})});
+   c.on('data',m=>{if(this.conn!==c)return;this.rx=Date.now();try{this.msg(m)}catch(e){console.error(e)}});
+   c.on('close',()=>{if(c===this.conn)this.lost()});c.on('error',()=>{if(c===this.conn)this.lost()})})}
  drop(){const c=this.conn,p=this.peer;this.conn=this.peer=null;try{c&&c.close()}catch(e){}try{p&&p.destroy()}catch(e){}}
- failed(){if(this.dead)return;clearTimeout(this.ct);if(this.st==='connecting'){this.fatal('Could not connect to room '+this.code+'. Check the code and that the host has started the game.')}
-  else if(this.st==='reconnecting'){this.drop();this.rt=setTimeout(()=>this.retry(),2000)}}
+ failed(){if(this.dead)return;clearTimeout(this.ct);
+  if(this.st==='connecting')this.fatal('Could not connect to room '+this.code+'. Check the room code and that the host is online.');
+  else if(this.st==='reconnecting'){this.drop();clearTimeout(this.rt);this.rt=setTimeout(()=>this.retry(),2000)}}
  fatal(t){this.dead=true;clearInterval(this.hb);clearTimeout(this.ct);clearTimeout(this.rt);this.drop();status=null;
-  if(this.hasWin&&V){localStorage.removeItem('bluffSession');feed({...V,phase:'over',end:t,kind:'abort',winner:null,pending:false,offline:[]})}else{alert(t);leave()}}
+  try{localStorage.removeItem('bluffSession')}catch(e){}
+  if(this.hasWin&&V)feed({...V,phase:'over',end:t,kind:'abort',winner:null,pending:false,offline:[]});else{alert(t);leave()}}
  lost(){if(this.st!=='online')return;this.drop();
-  if(V&&V.phase==='play'&&this.token){this.st='reconnecting';this.deadline=Date.now()+this.grace*1000;this.att=0;this.stat();this.rt=setTimeout(()=>this.retry(),300)}else this.fatal('Disconnected from the host.')}
- stat(){status=`Reconnecting to the host (attempt ${Math.max(1,this.att)}, ${Math.max(0,Math.round((this.deadline-Date.now())/1000))}s left). Your seat and cards are being held.`;if(V)ui()}
- retry(){if(this.dead||this.st!=='reconnecting')return;if(Date.now()>this.deadline)return this.fatal('Could not get back into the game in time.');this.att++;this.stat();this.go()}
+  if(V&&V.phase==='play'&&this.token){this.st='reconnecting';this.deadline=(this.rx||Date.now())+this.grace*1000;this.att=0;this.saveSession();this.stat();this.rt=setTimeout(()=>this.retry(),300)}
+  else this.fatal('Disconnected from the host.')}
+ saveSession(){if(!this.token)return;try{localStorage.bluffSession=JSON.stringify({code:this.code,token:this.token,t:Date.now()})}catch(e){}}
+ stat(){status=`Reconnecting to the host (attempt ${Math.max(1,this.att)}, ${Math.max(0,Math.round((this.deadline-Date.now())/1000))}s left). Your seat and cards are held until the host's 60-second deadline.`;if(V)ui()}
+ retry(){if(this.dead||this.st!=='reconnecting')return;if(Date.now()>=this.deadline)return this.fatal('You did not reconnect within 60 seconds.');this.att++;this.stat();this.go()}
  msg(m){if(!m||typeof m!=='object')return;
-  if(m.t==='welcome'){clearTimeout(this.ct);const ok=Number.isInteger(m.i)&&Number.isInteger(m.n)&&m.n>=2&&m.n<=6&&m.i>=0&&m.i<m.n;if(!ok)return this.fatal('The host sent an invalid welcome message.');
+  if(m.t==='welcome'){clearTimeout(this.ct);const ok=Number.isInteger(m.i)&&Number.isInteger(m.n)&&m.n>=2&&m.n<=6&&m.i>=0&&m.i<m.n;
+   if(!ok)return this.fatal('The host sent an invalid welcome message.');
    this.grace=Math.max(10,Math.min(600,+m.grace||GRACE));
    if(!this.hasWin){this.token=typeof m.token==='string'?m.token:null;this.hasWin=true;this.st='online';this.canNew=false;
-    if(this.token)localStorage.bluffSession=JSON.stringify({code:this.code,token:this.token,t:Date.now()});if(m.res)toast('Welcome back – you are in your old seat again.')}
-   else if(m.res&&m.i===V.me){this.st='online';status=null;toast('Reconnected.')}
-   else this.fatal('Could not get your seat back: the host started a different game.');
-   clearInterval(this.hb);this.hb=setInterval(()=>{if(this.st==='online'){if(Date.now()-this.rx>TIMEOUT)this.lost();else send(this.conn,{t:'ping'})}else if(this.st==='reconnecting')this.stat()},HEART/3)}
-  else if(m.t==='view'&&m.v&&typeof m.v==='object'){feed(m.v);if(m.v.phase==='over')localStorage.removeItem('bluffSession')}
+    this.saveSession();if(m.res)toast('Welcome back – your cards and seat were restored.')}
+   else if(m.res&&m.i===V.me){this.st='online';status=null;toast('Reconnected! Your game continues.');this.saveSession()}
+   else return this.fatal('Could not get your original seat back.');
+   status=null;clearTimeout(this.rt);clearInterval(this.hb);this.hb=setInterval(()=>{
+    if(this.st==='online'){if(Date.now()-this.rx>TIMEOUT)this.lost();else{send(this.conn,{t:'ping'});this.saveSession()}}
+    else if(this.st==='reconnecting'){this.stat();if(Date.now()>=this.deadline)this.fatal('The 60-second reconnection period ended.')}},HEART/3)}
+  else if(m.t==='view'&&m.v&&typeof m.v==='object'){this.backup=null;feed(m.v);if(m.v.phase==='over'){try{localStorage.removeItem('bluffSession')}catch(e){}}}
   else if(m.t==='notice')toast(String(m.m));
   else if(m.t==='reject'){toast(String(m.m));if(this.backup){sel=this.backup;this.backup=null;if(V)ui()}}
   else if(m.t==='bye'||m.t==='error')this.fatal(String(m.m||'Error.'))}
  tx(m){if(this.st!=='online')return'Not connected to the host.';send(this.conn,m);return null}
- play(c,k){return this.tx({t:'play',cards:c,claim:k})}bluff(){return this.tx({t:'bluff'})}accept(){return this.tx({t:'accept'})}newGame(){return null}abortMatch(){return'Only the host can end the match.'}
- close(){this.dead=true;clearInterval(this.hb);clearTimeout(this.ct);clearTimeout(this.rt);if(this.leaving&&this.st==='online')localStorage.removeItem('bluffSession');
-  const c=this.conn;this.conn=null;try{c&&c.close()}catch(e){}setTimeout(()=>{try{this.peer&&this.peer.destroy()}catch(e){}},200)}}
+ play(c,k){return this.tx({t:'play',cards:c,claim:k})}bluff(){return this.tx({t:'bluff'})}accept(){return this.tx({t:'accept'})}
+ pass(){return this.tx({t:'pass'})}newGame(){return null}abortMatch(){return'Only the host can end the match.'}
+ close(){this.dead=true;clearInterval(this.hb);clearTimeout(this.ct);clearTimeout(this.rt);
+  if(this.leaving&&V&&V.phase==='play')this.saveSession();
+  else if(this.leaving){try{localStorage.removeItem('bluffSession')}catch(e){}}
+  const c=this.conn;this.conn=null;try{c&&c.close()}catch(e){}setTimeout(()=>{try{this.peer&&this.peer.destroy()}catch(e){}},200)}
+}
 // ============================================================ menu
 const need=()=>{if(typeof Peer==='undefined'){alert('The online library could not be loaded (are you offline?). Playing vs CPU still works.');return false}return true};
 function begin(c){ctl=c;c.start()}
@@ -552,10 +621,13 @@ $('#mCpu').onclick=()=>{try{localStorage.bluffName=$('#name').value}catch(e){}be
 $('#mHost').onclick=()=>{if(!need())return;try{localStorage.bluffName=$('#name').value}catch(e){}begin(new Host(opts()))};
 $('#mJoin').onclick=()=>{const c=$('#code').value.trim().toUpperCase();if(!c)return $('#code').focus();if(!need())return;begin(new Client(c,$('#name').value))};
 $('#mRe').onclick=()=>{try{const s=JSON.parse(localStorage.bluffSession);if(need())begin(new Client(s.code,$('#name').value))}catch(e){}};
-function initRe(){const b=$('#mRe');b.hidden=true;try{const s=JSON.parse(localStorage.bluffSession);if(s&&Date.now()-s.t<36e5){b.hidden=false;b.textContent='Rejoin your last game ('+s.code+')'}}catch(e){}}
-function hint(){$('#hint').textContent=`${52*$('#nd').value} cards, about ${Math.floor(52*$('#nd').value/$('#np').value)} each. Classic order vs CPU needs 3+ players. Two-player games always end after ${HEADS_UP} plays (fewest cards wins). When joining, the host's settings are used.`}
+function initRe(){const b=$('#mRe');b.hidden=true;try{const s=JSON.parse(localStorage.bluffSession);if(s&&Date.now()-s.t<GRACE*1000){b.hidden=false;b.textContent='Rejoin your last game ('+s.code+')'}}catch(e){}}
+function hint(){$('#hint').textContent=`${52*$('#nd').value} cards, about ${Math.floor(52*$('#nd').value/$('#np').value)} each. Minimum 2 cards per play. Once only 2 players are active, a new ${HEADS_UP}-play countdown begins (fewest cards wins). Online disconnects have ${GRACE} seconds to reconnect.`}
 $('#np').onchange=$('#nd').onchange=hint;hint();
 try{$('#name').value=localStorage.bluffName||''}catch(e){}
 const room=new URLSearchParams(location.search).get('room');if(room)$('#code').value=room.toUpperCase().slice(0,5);
 initRe();
+setInterval(()=>{if(!$('#menu').hidden)initRe()},1000);
+// On refresh, automatically attempt to reclaim the saved seat in the same room.
+try{const saved=JSON.parse(localStorage.bluffSession);if(room&&saved&&saved.code===room.toUpperCase()&&Date.now()-saved.t<GRACE*1000&&typeof Peer!=='undefined')begin(new Client(saved.code,$('#name').value))}catch(e){}
 </script></body></html>
