@@ -25,6 +25,15 @@ input,select{background:#0c1729;color:var(--ink);border:1px solid #34507d;border
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block}
 #top{position:absolute;left:12px;right:12px;top:10px;display:flex;gap:10px;align-items:center;pointer-events:none}
 #top>*{pointer-events:auto}
+#roomBadge{display:inline-flex;gap:6px;align-items:center;flex-shrink:0;background:#091b33ee;border:1.5px solid #e9bb44;border-radius:999px;color:#ffe7a1;padding:5px 8px 5px 12px;font:700 12px system-ui;box-shadow:0 3px 13px #0006;white-space:nowrap}
+#roomBadge button{padding:.3em .65em;border-radius:999px;background:#d7a630;color:#231908;font-size:11px;box-shadow:none}
+#roomBadge strong{letter-spacing:1.2px}
+#roomBadge[hidden]{display:none!important}
+#prompt{min-width:0}
+#overlay .roomLine{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;color:#ffe7a1;font-weight:700}
+#overlay .roomLine button{font-size:12px;padding:.45em .85em}
+#overlay .waitNote{font-size:13px;color:#bad0ed;line-height:1.5}
+@media(max-width:700px){#top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:center}#title{display:none}#roomBadge{grid-column:1;grid-row:1;justify-self:start;font-size:11px}#roomBadge button{font-size:10px}#tb{grid-column:2;grid-row:1}#prompt{grid-column:1/-1;grid-row:2;min-height:2em;padding:.4em .7em}#claim{top:112px}#tb button{font-size:11px;padding:.38em .66em}}
 #title{font:800 24px Georgia,"DejaVu Serif",serif;letter-spacing:1px;white-space:nowrap}#title small{font:500 12px "Segoe UI",system-ui,sans-serif;color:#9db4d8;letter-spacing:0;margin-left:8px}
 #prompt{flex:1;text-align:center;font-weight:700;padding:.55em 1em;border:1.5px solid #8a7430;border-radius:999px;background:linear-gradient(#0f1e36ee,#0a1426ee);min-height:2.5em;box-shadow:0 4px 14px #0006;color:#fff3c4;font-size:14px}
 #tb{display:flex;gap:8px}#tb button{padding:.45em .95em;font-size:13px}
@@ -33,6 +42,11 @@ input,select{background:#0c1729;color:var(--ink);border:1px solid #34507d;border
 .seat b{display:block;font-size:14px}.seat i{display:block;font-style:normal;color:#9db4d8;font-size:12px}
 .seat.turn{border-color:var(--gold);animation:pulse 1.3s ease-in-out infinite}.seat.turn i{color:#ffe082}
 .seat.off{opacity:.6}.seat.off i{color:#ff8a80}.seat.out{opacity:.35;filter:grayscale(1)}
+#seats.dense .seat{padding:3px 8px 3px 3px;gap:5px;font-size:11px}
+#seats.dense .seat u{width:28px;height:28px;font-size:12px;flex-shrink:0}
+#seats.dense .seat span{max-width:78px;min-width:0}
+#seats.dense .seat b{font-size:11px;overflow:hidden;text-overflow:ellipsis}
+#seats.dense .seat i{font-size:10px}
 @keyframes pulse{50%{box-shadow:0 0 22px #ffc83daa,0 4px 12px #0007}}
 #plaque{position:absolute;transform:translate(-50%,-50%);text-align:center;background:linear-gradient(#0e2036dd,#08141fdd);border:1px solid #2f5a60;border-radius:12px;padding:8px 22px;min-width:190px;box-shadow:0 6px 16px #0008;pointer-events:none}
 #plaque b{display:block;font:700 19px "Segoe UI",system-ui,sans-serif}#plaque small{color:#a9bfdc;font-size:12px}
@@ -71,13 +85,14 @@ input,select{background:#0c1729;color:var(--ink);border:1px solid #34507d;border
 #overlay .row{display:flex;gap:12px;justify-content:center}
 @media(max-width:600px){#plaque{display:none!important}#claim{top:58px;gap:8px;padding:4px 14px 4px 4px}#claim u{width:34px;height:34px}#claim span b{font-size:15px}#claim em,#bubble{display:none!important}.mc{width:26px;height:36px;font-size:17px}.seat{padding:3px 10px 3px 3px;font-size:11px;gap:6px}.seat u{width:26px;height:26px;font-size:12px}.seat b{font-size:12px}.seat i{font-size:10px}#chips small{display:none}#chips button{padding:.3em .45em;min-width:30px;font-size:12px}#acts{gap:8px}#acts button{min-width:80px!important;padding:.6em .8em;font-size:14px}#acts button#bPlay{min-width:110px!important}#prompt{font-size:12px}#tb button{padding:.4em .7em}#banner{font-size:24px}}
 @media(max-width:860px){#game{grid-template-columns:1fr}#side{display:none}#title{display:none}#acts button{min-width:88px}#acts button#bPlay{min-width:120px}#me{display:none}}
+@media(max-width:700px){#claim{top:112px}}
 </style></head><body>
 
 <div id="menu">
  <div><h1>♠ Bluff ♦</h1><small>Play 2 or more cards face-down, claim a rank, and bluff if you dare. First to empty their hand wins.</small></div>
  <div class="panel">
   <div class="row"><label>Your name</label><input id="name" maxlength="14" placeholder="Player"></div>
-  <div class="row"><label>Players</label><select id="np"><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option></select></div>
+  <div class="row"><label>Players</label><select id="np"><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></div>
   <div class="row"><label>Decks</label><select id="nd"><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
   <div class="row"><label><input type="checkbox" id="classic"> Classic order (A, 2, 3 … K forced)</label></div>
   <div class="row"><label>Play limit <small>(0 = none)</small></label><input id="lim" type="number" min="0" max="2000" step="50" value="0" style="width:90px"></div>
@@ -88,12 +103,12 @@ input,select{background:#0c1729;color:var(--ink);border:1px solid #34507d;border
   <button id="mHost">Host a game</button>
   <div class="row"><input id="code" placeholder="Room code" maxlength="5" style="flex:1;text-transform:uppercase"><button id="mJoin">Join</button></div>
   <button id="mRe" class="gold" hidden></button></div>
- <div><small>Rules: play <b>at least 2 cards</b> each turn. If you have 1 card, you may <b>Pass</b> or call <b>Bluff!</b>. Only the next player may challenge. Disconnected players have 60 seconds to return.</small></div>
+ <div><small>Rules: play <b>at least 2 cards</b> each turn. If you have 1 card, you may <b>Pass</b> or call <b>Bluff!</b>. Only the next player may challenge. Disconnected players have 20 seconds to return. Their remaining hand is discarded after timeout.</small></div>
 </div>
 
 <div id="game" hidden>
  <div id="stage"><canvas id="cv"></canvas><div id="seats"></div><div id="plaque"></div><div id="claim" hidden></div><div id="bubble" hidden></div><div id="banner" hidden></div>
-  <div id="top"><div id="title">♠♥ BLUFF ♦♣<small id="sub"></small></div><div id="prompt"></div><div id="tb"><button id="bAbort" class="bad" hidden>Abort match</button><button id="bNew">New game</button><button id="bMenu">Menu</button></div></div>
+  <div id="top"><div id="title">♠♥ BLUFF ♦♣<small id="sub"></small></div><div id="roomBadge" hidden><span>ROOM <strong id="roomCode"></strong></span><button id="copyRoom" type="button" title="Copy invite link">Copy</button></div><div id="prompt"></div><div id="tb"><button id="bAbort" class="bad" hidden>Abort match</button><button id="bNew">New game</button><button id="bMenu">Menu</button></div></div>
   <div id="bar"><div id="chips"></div><div id="acts"><button id="bClear">Clear</button><button id="bPlay" class="go">Play</button><button id="bPass" class="gold" hidden>Pass</button><button id="bBluff" class="bad">Bluff!</button><button id="bAcc" class="gold">Accept</button></div></div>
   <div id="me"></div>
  </div>
@@ -119,7 +134,7 @@ class Engine{
  cap(){const c=[this.max,this.duelStart===null?0:this.duelStart+HEADS_UP].filter(Boolean);return c.length?Math.min(...c):0}
  reset(){this.limName='Play limit';this.hands=Array.from({length:this.n},()=>[]);this.active=Array(this.n).fill(true);
   this.pile=[];this.last=null;this.hist=[];this.req=1;this.turn=0;this.phase='lobby';this.duelStart=this.n===2?0:null;
-  this.winner=null;this.kind='';this.msg='';this.plays=0;this.draw=[];this.lies=Array.from({length:this.n},()=>[0,0]);this.forfeits=[]}
+  this.winner=null;this.kind='';this.msg='';this.plays=0;this.draw=[];this.lies=Array.from({length:this.n},()=>[0,0]);this.forfeits=[];this.discards=[]}
  deal(){const d=[];for(let k=0;k<this.decks;k++)for(let r=1;r<14;r++)for(let suit=0;suit<4;suit++)d.push([r,suit]);
   for(let i=d.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[d[i],d[j]]=[d[j],d[i]]}
   this.reset();d.forEach((c,i)=>this.hands[i%this.n].push(c));this.turn=Math.random()*this.n|0;this.phase='play'}
@@ -163,19 +178,24 @@ class Engine{
   return null}
  eliminate(p){
   if(this.phase!=='play'||!this.active[p])return false;
-  const wasTurn=this.turn===p,wasLast=this.last&&this.last.p===p,pending=this.pending();
-  this.active[p]=false;this.forfeits.push(p);this.hands[p]=[]; // forfeited cards leave the game, never awarded to an opponent
+  const wasTurn=this.turn===p,wasLast=!!this.last&&this.last.p===p;
+  this.active[p]=false;this.forfeits.push(p);
+  // Remove only the eliminated player's unplayed hand. The existing centre pile stays untouched.
+  // Discarded cards are NOT dealt to opponents and can never be challenged or returned.
+  this.discards.push(...this.hands[p]);this.hands[p]=[];
   const left=this.remaining();
   if(left.length===1){this.winner=left[0];this.kind='forfeit';this.phase='over';return true}
   if(left.length===2&&this.duelStart===null)this.duelStart=this.plays;
-  if(wasLast||wasTurn){
-   if(this.last&&this.hist.length&&!this.hist[this.hist.length-1].verdict)this.hist[this.hist.length-1].verdict='unchallenged';
+  if(wasLast){
+   // The absent claimer cannot be challenged, but the table pile is still in play.
+   if(this.hist.length&&!this.hist[this.hist.length-1].verdict)this.hist[this.hist.length-1].verdict='unchallenged';
    this.last=null;
   }
-  if(wasTurn)this.turn=this.next(p);
-  // The last-card claim is accepted if the ONLY eligible challenger timed out.
-  if(wasTurn&&pending&&!wasLast&&this.active[this.hist[this.hist.length-1].p]){
-   const w=this.hist[this.hist.length-1].p;this.winner=w;this.kind='win';this.phase='over';this.hist[this.hist.length-1].verdict='accepted';return true}
+  if(wasTurn){
+   // Advance the challenge opportunity to the next active seat. Do NOT auto-award
+   // a winner if the previous player emptied their hand: the new seat may Bluff.
+   this.turn=this.next(p);
+  }
   if(left.every(i=>this.hands[i].length<2))this.limit('No one can play 2 cards');
   return true}
  abort(msg){if(this.phase==='over')return;this.phase='over';this.winner=null;this.kind='abort';this.msg=msg||'The game was aborted.';
@@ -192,7 +212,7 @@ class Engine{
   return{phase:this.phase,names:nm,me:p,hand:this.hands[p].slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]),counts:this.hands.map(h=>h.length),pile:this.pile.length,
    last:this.last&&{p:this.last.p,count:this.last.cards.length,claim:this.last.claim},hist:this.hist.slice(-14).map(e=>({...e})),req:this.req,turn:this.turn,decks:this.decks,
    classic:this.classic,end,kind:this.kind,winner:this.winner,pending:this.pending(),plays:this.plays,max:this.cap(),offline:[],grace:0,
-   active:this.active.slice(),duel:this.duelStart!==null,duelPlays:this.duelPlays(),forfeits:this.forfeits.slice()}}
+   active:this.active.slice(),duel:this.duelStart!==null,duelPlays:this.duelPlays(),forfeits:this.forfeits.slice(),discarded:this.discards.length}}
  // ---------- bots (public information + their own hand only)
  rc(p){const c={};for(const[r]of this.hands[p])c[r]=(c[r]||0)+1;return c}
  lieRate(p){const[l,s]=this.lies[p];return(l+.9)/(s+6)}
@@ -229,7 +249,7 @@ class Engine{
 // ============================================================ UI helpers
 const $=s=>document.querySelector(s),RN=r=>({1:'Ace',11:'Jack',12:'Queen',13:'King'}[r]||['','','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten'][r]);
 const RS=r=>({1:'A',11:'J',12:'Q',13:'K'}[r]||String(r)),SU='♠♥♦♣',cs=c=>RS(c[0])+SU[c[1]];
-const claimTxt=(n,r)=>n+' '+RN(r)+(n===1?'':r===6?'es':'s'),COL=['#f9a825','#1e88e5','#8e24aa','#00897b','#e53935','#6d4c41'];
+const claimTxt=(n,r)=>n+' '+RN(r)+(n===1?'':r===6?'es':'s'),COL=['#f9a825','#1e88e5','#8e24aa','#00897b','#e53935','#6d4c41','#5c6bc0','#d81b60','#00acc1','#7cb342'];
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x)),lerp=(a,b,t)=>a+(b-a)*t,ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2,now=()=>performance.now()/1000;
 const takes=(n,v)=>n==='You'?'You take':n+' takes';
@@ -411,40 +431,43 @@ function paused(){return V&&V.phase==='play'&&V.offline&&V.offline.length>0}
 function myTurn(){return V.phase==='play'&&V.turn===V.me&&!paused()&&!status&&!rev}
 function prompt(){const v=V;if(status)return'Connection lost – trying to get you back into the game…';
  if(paused())return`Game paused: waiting for ${v.offline.map(i=>v.names[i]).join(', ')} to reconnect (${Math.max(0,Math.round((pauseUntil-Date.now())/1000))}s left)`;
- if(rev)return'Bluff called!';if(v.phase==='lobby')return ctl.lobbyHint||'Waiting for players…';if(v.phase==='over')return'Game over';
+ if(rev)return'Bluff called!';if(v.phase==='lobby')return ctl.lobbyHint||'Waiting for players…';if(v.phase==='over')return ctl&&ctl.isHost?'Match finished – start another round in this same room.':'Match finished – request Play Again; the host starts the next round.';
  if(v.turn!==v.me)return v.last?`${v.names[v.turn]} is deciding… (${v.names[v.last.p]} claimed ${claimTxt(v.last.count,v.last.claim)})`:`${v.names[v.turn]} is playing…`;
  if(v.pending)return`${v.names[v.last.p]} played their last cards! Call Bluff, or Accept and let them win.`;
  if(v.hand.length===1)return'Only 1 card remains: call Bluff on the last play, or press Pass (single-card plays are forbidden).';
  if(v.last)return`Your turn – ${v.names[v.last.p]} claims ${claimTxt(v.last.count,v.last.claim)}. Call Bluff, or play 2+ cards.`;
  return'Your turn – select at least 2 cards, choose your claim, then Play.'}
-function ui(){if(!V||!W)return;const v=V,n=v.names.length;if(geo.length!==n)geometry();
+function ui(){if(!V||!W)return;roomUI();const v=V,n=v.names.length;if(geo.length!==n)geometry();$('#seats').classList.toggle('dense',n>=8);
  $('#seats').innerHTML=v.names.map((nm,i)=>{if(i===v.me)return'';const off=v.offline&&v.offline.includes(i),turn=v.turn===i&&v.phase==='play'&&!off&&!rev&&!paused();
   const sub=v.phase==='lobby'?(nm==='Waiting…'?'waiting…':'joined'):(v.active&&v.active[i]===false)?'eliminated':off?'reconnecting…':turn?'thinking…':v.counts[i]+' cards',[x,y]=geo[i].badge;
-  return`<div class="seat ${turn?'turn':''} ${off?'off':''} ${v.active&&v.active[i]===false?'out':''}" style="left:${x}px;top:${y}px"><u style="background:${COL[i%6]}">${esc(nm[0]).toUpperCase()}</u><span><b>${esc(nm)}</b><i>${sub}</i></span></div>`}).join('');
+  return`<div title="${esc(nm)}" class="seat ${turn?'turn':''} ${off?'off':''} ${v.active&&v.active[i]===false?'out':''}" style="left:${x}px;top:${y}px"><u style="background:${COL[i%COL.length]}">${esc(nm[0]).toUpperCase()}</u><span><b>${esc(nm)}</b><i>${sub}</i></span></div>`}).join('');
  const myT=v.turn===v.me&&v.phase==='play'&&!paused()&&!rev;
- $('#me').innerHTML=`<div class="seat ${myT?'turn':''}" style="position:static;transform:none"><u style="background:${COL[v.me%6]}">Y</u><span><b>You</b><i>${myT?'your turn':v.counts[v.me]+' cards'}</i></span></div>`;
+ $('#me').innerHTML=`<div class="seat ${myT?'turn':''}" style="position:static;transform:none"><u style="background:${COL[v.me%COL.length]}">Y</u><span><b>You</b><i>${myT?'your turn':v.counts[v.me]+' cards'}</i></span></div>`;
  const pp=P(0,150,0),pl=$('#plaque');pl.style.left=pp[0]+'px';pl.style.top=pp[1]+'px';pl.style.display=rev?'none':'';
  pl.innerHTML=v.phase==='lobby'?'<b>Lobby</b><small>Dealing starts when every seat is filled</small>':`<b>${v.last?esc(v.names[v.last.p])+' claims '+claimTxt(v.last.count,v.last.claim):'New round'}</b><small>${v.pile?v.pile+(v.pile===1?' card':' cards')+' in the pile':'no claim yet'}${v.classic&&v.phase==='play'?' · required: '+RN(v.req)+'s':''}</small>`;
  $('#sub').textContent=` ${v.decks} deck${v.decks>1?'s':''} · ${v.classic?'classic order':'free choice'}`;
- $('#info').innerHTML=`${52*v.decks} cards · each rank ×${4*v.decks}<br>Rank rule: ${v.classic?'classic order':'free choice'}${v.classic&&v.phase==='play'?`<br><b>You must claim: ${RN(v.req)}s</b>`:''}${v.duel?`<br><b>Final two: ${v.duelPlays} / ${HEADS_UP} plays</b>`:v.max?`<br>Plays: ${v.plays} / ${v.max}`:''}${v.forfeits&&v.forfeits.length?`<br>Out: ${v.forfeits.map(i=>esc(v.names[i])).join(', ')}`:''}`;
+ $('#info').innerHTML=`${52*v.decks} cards · each rank ×${4*v.decks}<br>Rank rule: ${v.classic?'classic order':'free choice'}${v.classic&&v.phase==='play'?`<br><b>You must claim: ${RN(v.req)}s</b>`:''}${v.duel?`<br><b>Final two: ${v.duelPlays} / ${HEADS_UP} plays</b>`:v.max?`<br>Plays: ${v.plays} / ${v.max}`:''}${v.forfeits&&v.forfeits.length?`<br>Out: ${v.forfeits.map(i=>esc(v.names[i])).join(', ')}`:''}${v.discarded?`<br><b>Forfeited cards discarded: ${v.discarded}</b>`:''}`;
  $('#log').innerHTML=v.hist.length?v.hist.slice().reverse().map(e=>{const t=`<b>${esc(v.names[e.p])}</b> ${claimTxt(e.count,e.claim)}`;
   const r=e.verdict==='lie'?`<br>LIE! ${e.revealed.map(cs).join(' ')}<br><small>${esc(takes(v.names[e.taker]))} the pile</small>`:e.verdict==='true'?`<br>True – <small>${esc(takes(v.names[e.taker]))} the pile</small>`:e.verdict==='accepted'?'<br><small>nobody called Bluff</small>':e.verdict==='unchallenged'?'<br><small>unchallenged</small>':e.verdict==='aborted'?'<br><small>game ended</small>':'';
   return`<div class="${e.verdict==='lie'||e.verdict==='true'?e.verdict:''}">${t}${r}</div>`}).join(''):'<small>No plays yet.<br>The first player starts the round.</small>';
+ if(v.phase==='over'&&v.rematchReady&&v.rematchReady.length){$('#info').innerHTML+=`<br><b>Next round requests: ${v.rematchReady.length} player(s)</b>`}
  const cnt={};v.hand.forEach(c=>cnt[c[0]]=(cnt[c[0]]||0)+1);
  $('#chips').innerHTML='<small>I CLAIM</small>'+[...Array(13).keys()].map(i=>i+1).map(r=>`<button data-r="${r}" class="${r===claim?'on':''}" ${v.classic||!myTurn()?'disabled':''}>${RS(r)}${cnt[r]?`<i>${cnt[r]}</i>`:''}</button>`).join('');
  claimUI();
  btns();const o=$('#overlay');
  if(status){o.hidden=false;o.innerHTML=`<div class="box"><div class="t">Connection lost</div><div>${esc(status)}</div><div class="row"><button id="oMenu">Leave</button></div></div>`;$('#oMenu').onclick=leave}
  else if(v.phase==='over'&&!rev){clearTimeout(endTimer);endTimer=setTimeout(()=>{if(!V||V.phase!=='over'||rev)return;o.hidden=false;o.innerHTML=`<div class="box"><div class="t">${v.kind==='abort'||v.kind==='draw'?'Game over':v.winner===v.me?'Victory!':'Game over'}</div><div class="m">${esc(v.end)}</div>
-   <div class="row">${ctl&&ctl.canNew?'<button class="go" id="oAgain">Play again</button>':''}<button id="oMenu">Menu</button></div></div>`;
-   const a=$('#oAgain');if(a)a.onclick=()=>act(()=>ctl.newGame());$('#oMenu').onclick=leave;if(v.winner===v.me)burst()},v.kind==='win'?900:0)}
+   ${ctl&&ctl.code?`<div class="roomLine">ROOM ${esc(ctl.code)} <button type="button" id="oCopy">Copy invite</button></div>`:''}
+   ${ctl&&ctl.isClient?`<div class="waitNote">${(v.rematchReady||[]).includes(v.me)?'Your Play Again request has been sent. Waiting for the host to start the next round.':'Same room stays open. Press Play Again to ask the host for another round.'}</div>`:ctl&&ctl.isHost?`<div class="waitNote">The room stays open for everyone. ${v.rematchReady&&v.rematchReady.length?`${v.rematchReady.length} player(s) requested another round.`:'Click Play Again to deal a fresh round.'}</div>`:''}
+   <div class="row"><button class="go" id="oAgain" ${ctl&&ctl.isClient&&(v.rematchReady||[]).includes(v.me)?'disabled':''}>${ctl&&ctl.isClient?(v.rematchReady||[]).includes(v.me)?'Requested ✓':'Play again':'Play again'}</button><button id="oMenu">Leave room</button></div></div>`;
+   const a=$('#oAgain');if(a)a.onclick=()=>act(()=>ctl.newGame());const copy=$('#oCopy');if(copy)copy.onclick=copyRoomLink;$('#oMenu').onclick=leave;if(v.winner===v.me)burst()},v.kind==='win'?900:0)}
  else{clearTimeout(endTimer);o.hidden=true}
  $('#prompt').textContent=prompt()+(v.phase==='play'&&v.duel?` · FINAL TWO ${v.duelPlays}/${HEADS_UP}`:'')}
 let claimKey='';
 function miniCards(r,k){const n=Math.min(k,4);return Array.from({length:n},()=>`<i class="mc ${''}">${RS(r)}</i>`).join('')}
 function claimUI(){const v=V,c=$('#claim'),b=$('#bubble'),L=v.phase==='play'&&v.last;
  if(!L){c.hidden=b.hidden=true;claimKey='';return}
- const p=v.last.p,who=v.names[p],col=COL[p%6],key=p+':'+v.plays,fresh=key!==claimKey;claimKey=key;
+ const p=v.last.p,who=v.names[p],col=COL[p%COL.length],key=p+':'+v.plays,fresh=key!==claimKey;claimKey=key;
  const mine=p===v.me;
  c.hidden=false;c.style.borderColor=col;
  c.innerHTML=`<u style="background:${col}">${esc(who[0]).toUpperCase()}</u><span><small>${mine?'You claim':esc(who)+' claims'}</small><b>${claimTxt(v.last.count,v.last.claim)}</b></span><div class="mcs">${miniCards(v.last.claim,v.last.count)}</div><em>${v.pile} card${v.pile===1?'':'s'}<br>in the pile</em>`;
@@ -463,7 +486,15 @@ function act(fn){const e=fn();if(e)toast(e)}
 function doPlay(){if(!myTurn()||V.pending)return;if(sel.size<2){toast('Select at least 2 cards. With only 1 card, use Pass or Bluff.');return}const idx=[...sel],cards=idx.map(i=>V.hand[i]),backup=new Set(sel);
  pendingFly=idx.map(i=>({x:hv[i].x,y:hv[i].y-hv[i].lift,rot:hv[i].rot,c:hv[i].c}));
  const e=ctl.play(cards,claim);if(e){pendingFly=null;toast(e);return}ctl.backup=backup;sel=new Set();ui()}
-function leave(){if(ctl)ctl.close();ctl=null;V=null;status=null;rev=null;queue=[];flyers=[];hv=[];geo=[];sel=new Set();clearTimeout(endTimer);$('#overlay').hidden=true;$('#game').hidden=true;$('#menu').hidden=false;history.replaceState(null,'',location.pathname);initRe()}
+function roomUI(){const b=$('#roomBadge'),c=ctl&&ctl.code;
+ b.hidden=!(c&&(ctl.isHost||ctl.isClient));if(c)$('#roomCode').textContent=c}
+function roomInvite(){const c=ctl&&ctl.code;if(!c)return'';const url=new URL(location.href);
+ url.searchParams.set('room',c);url.hash='';return url.protocol==='file:'?c:url.href}
+async function copyRoomLink(){const link=roomInvite();if(!link)return;
+ try{if(!navigator.clipboard||!navigator.clipboard.writeText)throw Error('No clipboard');await navigator.clipboard.writeText(link);toast('Room invite copied: '+ctl.code)}
+ catch(e){window.prompt('Copy this room invite (or code):',link)}}
+$('#copyRoom').onclick=copyRoomLink;
+function leave(){if(ctl)ctl.close();ctl=null;V=null;status=null;rev=null;queue=[];flyers=[];hv=[];geo=[];sel=new Set();clearTimeout(endTimer);$('#overlay').hidden=true;$('#roomBadge').hidden=true;$('#game').hidden=true;$('#menu').hidden=false;history.replaceState(null,'',location.pathname);initRe()}
 const ask=t=>confirm(t),mpos=e=>{const r=cv.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
 cv.addEventListener('mousemove',e=>{if(!V)return;const i=hitHand(...mpos(e));if(i!==hover){hover=i;wake()}cv.style.cursor=i>=0&&myTurnUI()?'pointer':'default'});
 cv.addEventListener('mouseleave',()=>{hover=-1;wake()});
@@ -477,7 +508,7 @@ $('#bPass').onclick=()=>act(()=>ctl.pass());
 $('#bAcc').onclick=()=>{const who=V.last?V.names[V.last.p]:'them';if(ask(`Accept and let ${who} win the game?`))act(()=>ctl.accept())};
 $('#bNew').onclick=()=>{if(V.phase==='play'&&!ask('Abort the current game and deal a new one?'))return;act(()=>ctl.newGame())};
 $('#bAbort').onclick=()=>{if(ask('End the match for everybody?'))act(()=>ctl.abortMatch())};
-$('#bMenu').onclick=()=>{if(V.phase==='play'&&!status&&!ask('Leave this game? '+(ctl.isHost?'The match ends for everybody.':'Your seat will be reserved for 60 seconds, then eliminated.')))return;if(ctl.isClient)ctl.leaving=true;leave()};
+$('#bMenu').onclick=()=>{if(V.phase==='play'&&!status&&!ask('Leave this game? '+(ctl.isHost?'The match ends for everybody.':`Your seat will be reserved for ${GRACE} seconds, then eliminated. Your remaining hand is discarded.`)))return;if(ctl.isClient)ctl.leaving=true;leave()};
 addEventListener('keydown',e=>{if($('#game').hidden||!V||e.repeat||/INPUT|SELECT/.test(e.target.tagName))return;
  if(e.key==='Enter'||e.key===' '){if(e.target.closest&&e.target.closest('button'))return;e.preventDefault();doPlay()}   // Enter/Space only Play, never Accept
  else if(e.key==='b'||e.key==='B'){if(!myTurn()||!V.last)return;if(Date.now()<armed){armed=0;act(()=>ctl.bluff())}else{armed=Date.now()+2000;toast('Press B again to call Bluff')}}
@@ -494,12 +525,12 @@ class Local{
  play(c,k){return this.do(this.e.play(0,c,k))}bluff(){return this.do(this.e.challenge(0))}accept(){return this.do(this.e.accept(0))}pass(){return this.do(this.e.pass(0))}
  newGame(){this.e.deal();this.sync()}close(){this.tk++}}
 // ---- online: host-authoritative over WebRTC (PeerJS).  Messages: hello/welcome/view/notice/reject/ping/bye/error
-const GRACE=60,HEART=3000,TIMEOUT=12000,PFX='bluffgame-',ALPHA='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const GRACE=20,HEART=3000,TIMEOUT=12000,PFX='bluffgame-',ALPHA='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const tok=()=>[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,'0')).join('');
 const send=(c,m)=>{try{if(c&&c.open)c.send(m)}catch(e){}};
 class Host{
  constructor(o){this.isHost=true;this.canNew=true;this.np=o.np;this.grace=GRACE;this.e=new Engine([cleanName(o.name,'Host'),...Array(o.np-1).fill(null)],o.nd,o.classic,o.lim);
-  this.conns={};this.seatOf=new Map();this.pend=new Map();this.rx=new Map();this.joined=new Set([0]);this.tokens={};this.off={};this.lastPing=0;this.tries=0;this.closed=false;this.open()}
+  this.conns={};this.seatOf=new Map();this.pend=new Map();this.rx=new Map();this.joined=new Set([0]);this.tokens={};this.off={};this.rematchReady=new Set();this.lastPing=0;this.tries=0;this.closed=false;this.open()}
  open(){this.code=Array.from({length:5},()=>ALPHA[Math.random()*ALPHA.length|0]).join('');
   const p=new Peer(PFX+this.code);this.peer=p;
   p.on('error',er=>{if(this.closed||this.peer!==p)return;
@@ -507,49 +538,50 @@ class Host{
    else toast('Room network error: '+er.type)});
   p.on('open',()=>{if(this.closed)return;this.lobbyHint=`Room code ${this.code} – friends open ${location.origin}${location.pathname}?room=${this.code}`;
    history.replaceState(null,'','?room='+this.code);if(V)feed(this.vw(0))});
-  p.on('connection',c=>{if(this.closed||this.pend.size>=8){c.close();return}this.pend.set(c,Date.now());this.rx.set(c,Date.now());
+  p.on('connection',c=>{if(this.closed||this.pend.size>=20){c.close();return}this.pend.set(c,Date.now());this.rx.set(c,Date.now());
    c.on('data',m=>{try{this.handle(c,m)}catch(e){console.error(e);send(c,{t:'reject',m:'The host could not process that message.'})}});
    c.on('close',()=>this.dropped(c));c.on('error',()=>this.dropped(c))})}
  start(){showGame();this.timer=setInterval(()=>this.tick(),1000);this.sync()}
  paused(){return this.e.phase==='play'&&Object.keys(this.off).length>0}
  offNames(){return Object.keys(this.off).map(s=>this.e.names[s]||'Player '+(+s+1)).join(', ')}
- vw(s){const v=this.e.view(s);if(this.paused()){v.offline=Object.keys(this.off).map(Number).sort();v.grace=Math.max(0,Math.min(...Object.values(this.off))-Date.now())/1000}return v}
+ vw(s){const v=this.e.view(s);v.rematchReady=[...this.rematchReady];if(this.paused()){v.offline=Object.keys(this.off).map(Number).sort();v.grace=Math.max(0,Math.min(...Object.values(this.off))-Date.now())/1000}return v}
  sync(){feed(this.vw(0));for(const s in this.conns)if(this.joined.has(+s))send(this.conns[s],{t:'view',v:this.vw(+s)})}
  note(t){toast(t);for(const s in this.conns)send(this.conns[s],{t:'notice',m:t})}
  handle(c,m){if(!m||typeof m!=='object')return;this.rx.set(c,Date.now());const t=m.t,seat=this.seatOf.get(c);
   if(t==='ping')return;
   if(seat===undefined){if(t==='hello')this.hello(c,m);return}
-  if(t==='leave'){this.dropped(c);try{c.close()}catch(e){}return}
+  if(t==='leave'){this.dropped(c,this.e.phase!=='play');try{c.close()}catch(e){}return}
+  if(t==='rematch'){if(this.e.phase==='over'){this.rematchReady.add(seat);this.sync()}return}
   if(!['play','bluff','accept','pass'].includes(t))return;
   if(this.e.phase!=='play')return send(c,{t:'reject',m:'The game is not running.'});
   if(this.paused())return send(c,{t:'reject',m:'The game is paused: waiting for '+this.offNames()+'.'});
   const er=t==='play'?this.e.play(seat,m.cards,m.claim):t==='bluff'?this.e.challenge(seat):t==='pass'?this.e.pass(seat):this.e.accept(seat);
   er?send(c,{t:'reject',m:er}):this.sync()}
  seatFor(token){if(typeof token!=='string'||!token||token.length>64)return -1;
-  for(const s in this.tokens)if(this.joined.has(+s)&&this.e.active[+s]&&this.tokens[s]===token){
+  for(const s in this.tokens)if(this.joined.has(+s)&&(this.e.phase!=='play'||this.e.active[+s])&&this.tokens[s]===token){
    if(this.off[s]&&Date.now()>=this.off[s])return -1;return+s}return -1}
  welcome(c,s,res){send(c,{t:'welcome',i:s,n:this.np,d:this.e.decks,cl:this.e.classic,token:this.tokens[s],res,grace:this.grace})}
  hello(c,m){const seat=this.seatFor(m.token);if(seat>=0)return this.rejoin(c,seat);
   const refuse=x=>{send(c,{t:'error',m:x});setTimeout(()=>c.close(),300)};
-  if(this.e.phase!=='lobby')return refuse(m.token?'That seat expired. The 60-second reconnect window has ended.':'This game is full or already started.');
+  if(this.e.phase==='play')return refuse(m.token?`That seat expired. The ${GRACE}-second reconnect window has ended.`:'This game is already in progress. You can join the next round.');
   const free=[...Array(this.np).keys()].filter(s=>s&&!this.joined.has(s));if(!free.length)return refuse('This game is full.');
   const s=free[0];this.pend.delete(c);this.conns[s]=c;this.seatOf.set(c,s);this.e.names[s]=cleanName(m.name,'Player '+(s+1),this.e.names);
-  this.joined.add(s);this.tokens[s]=tok();this.welcome(c,s,false);if(this.joined.size===this.np)this.e.deal();this.sync()}
+  this.joined.add(s);this.tokens[s]=tok();this.welcome(c,s,false);if(this.e.phase==='lobby'&&this.joined.size===this.np)this.e.deal();this.sync()}
  rejoin(c,s){const old=this.conns[s];if(old&&old!==c){this.seatOf.delete(old);this.rx.delete(old);try{old.close()}catch(e){}}
   this.pend.delete(c);this.conns[s]=c;this.seatOf.set(c,s);delete this.off[s];this.welcome(c,s,true);
   const n=this.e.names[s];this.note(this.paused()?`${n} reconnected. Still waiting for ${this.offNames()}.`:`${n} reconnected – play resumes.`);this.sync()}
- dropped(c){this.pend.delete(c);const lastSeen=this.rx.get(c)||Date.now();this.rx.delete(c);const s=this.seatOf.get(c);if(s===undefined)return;
+ dropped(c,explicit=false){this.pend.delete(c);const lastSeen=this.rx.get(c)||Date.now();this.rx.delete(c);const s=this.seatOf.get(c);if(s===undefined)return;
   this.seatOf.delete(c);if(this.conns[s]===c)delete this.conns[s];
   const n=this.e.names[s]||'Player '+(s+1);
-  if(this.e.phase==='play'&&this.e.active[s]){
-   if(!this.off[s]){this.off[s]=lastSeen+this.grace*1000;this.note(`${n} disconnected. Paused for ${this.grace} seconds for a possible rejoin.`)}}
-  else{this.joined.delete(s);delete this.tokens[s];if(this.e.phase==='lobby')this.e.names[s]=null}
+  if(!explicit&&(this.e.phase!=='play'||this.e.active[s])){
+   if(!this.off[s]){this.off[s]=lastSeen+this.grace*1000;this.note(`${n} disconnected. ${this.e.phase==='play'?'Game paused. ':''}They can return within ${this.grace} seconds.`)}}
+  else{delete this.off[s];this.joined.delete(s);this.rematchReady.delete(s);delete this.tokens[s];if(this.e.phase==='lobby')this.e.names[s]=null;else if(this.e.phase==='play')this.e.eliminate(s);else this.e.names[s]=null}
   this.sync()}
  expire(s){if(!this.off[s]||Date.now()<this.off[s])return;
-  const n=this.e.names[s];delete this.off[s];this.joined.delete(+s);delete this.tokens[s];
-  const c=this.conns[s];if(c){this.seatOf.delete(c);this.rx.delete(c);delete this.conns[s];send(c,{t:'error',m:'Your 60-second reconnect window expired.'});try{c.close()}catch(e){}}
-  if(this.e.phase==='play'){this.e.eliminate(+s);this.note(`${n} did not return in 60 seconds and is eliminated. ${this.e.remaining().length} players remain.`)}
-  else this.e.names[s]=null;
+  const n=this.e.names[s];delete this.off[s];this.joined.delete(+s);this.rematchReady.delete(+s);delete this.tokens[s];
+  const c=this.conns[s];if(c){this.seatOf.delete(c);this.rx.delete(c);delete this.conns[s];send(c,{t:'error',m:`Your ${GRACE}-second reconnect window expired.`});try{c.close()}catch(e){}}
+  if(this.e.phase==='play'){const cards=this.e.hands[+s].length;this.e.eliminate(+s);this.note(`${n} did not return in ${GRACE} seconds and is eliminated. Their ${cards} remaining card(s) were discarded (not given to anyone). ${this.e.remaining().length} players remain.`)}
+  else {this.e.names[s]=null;this.note(`${n} left the room. Their seat is open for the next round.`)}
   this.sync()}
  tick(){const t=Date.now();
   for(const[c,when]of this.pend)if(t-when>10000){this.pend.delete(c);this.rx.delete(c);try{c.close()}catch(e){}}
@@ -562,8 +594,8 @@ class Host{
  play(c,k){return this.g()||this.do(this.e.play(0,c,k))}bluff(){return this.g()||this.do(this.e.challenge(0))}
  accept(){return this.g()||this.do(this.e.accept(0))}pass(){return this.g()||this.do(this.e.pass(0))}
  abortMatch(){if(this.e.phase!=='play')return'There is no running match.';this.abort('The host ended the match.')}
- newGame(){if(this.paused())return this.g();for(let s=1;s<this.np;s++)if(!this.joined.has(s))this.e.names[s]=null;
-  if(this.joined.size===this.np)this.e.deal();else this.e.reset();this.sync()}
+ newGame(){if(this.paused())return this.g();if(Object.keys(this.off).length)return`Waiting ${GRACE} seconds for disconnected players to return before starting a new round.`;this.rematchReady.clear();for(let s=1;s<this.np;s++)if(!this.joined.has(s))this.e.names[s]=null;
+  if(this.joined.size===this.np){this.e.deal();this.note('New round started in room '+this.code+'!')}else{this.e.reset();this.lobbyHint=`Room ${this.code} – waiting for ${this.np-this.joined.size} more player(s). Invite with the same room code.`}this.sync()}
  close(){this.closed=true;clearInterval(this.timer);for(const s in this.conns)send(this.conns[s],{t:'bye',m:'The host closed the game.'});
   setTimeout(()=>{try{this.peer.destroy()}catch(e){}},400)}
 }
@@ -571,8 +603,8 @@ class Client{
  constructor(code,name){this.isClient=true;this.code=code;this.name=name;this.st='connecting';this.hasWin=false;this.token=null;this.grace=GRACE;this.att=0;
   try{const s=JSON.parse(localStorage.bluffSession);if(s.code===code&&Date.now()-s.t<GRACE*1000)this.token=s.token}catch(e){}
   this.go()}
- start(){showGame();toast('Connecting to room '+this.code+'…');feed({phase:'lobby',names:['You'],me:0,hand:[],counts:[0],pile:0,last:null,hist:[],req:1,turn:0,decks:1,classic:false,end:'',pending:false,plays:0,max:0,offline:[],grace:0,active:[true],duel:false,duelPlays:0,forfeits:[]});this.lobbyHint='Connecting…'}
- go(){this.drop();const p=this.peer=new Peer();clearTimeout(this.ct);this.ct=setTimeout(()=>this.failed(),9000);
+ start(){showGame();history.replaceState(null,'','?room='+this.code);toast('Connecting to room '+this.code+'…');feed({phase:'lobby',names:['You'],me:0,hand:[],counts:[0],pile:0,last:null,hist:[],req:1,turn:0,decks:1,classic:false,end:'',pending:false,plays:0,max:0,offline:[],grace:0,active:[true],duel:false,duelPlays:0,forfeits:[],discarded:0});this.lobbyHint='Connecting…'}
+ go(){this.drop();const p=this.peer=new Peer();clearTimeout(this.ct);this.ct=setTimeout(()=>this.failed(),5000);
   p.on('error',()=>{if(this.peer===p)this.failed()});
   p.on('open',()=>{if(this.peer!==p)return;const c=this.conn=p.connect(PFX+this.code,{reliable:true});
    c.on('open',()=>{if(this.conn!==c)return;this.rx=Date.now();send(c,{t:'hello',name:this.name,token:this.token})});
@@ -581,18 +613,18 @@ class Client{
  drop(){const c=this.conn,p=this.peer;this.conn=this.peer=null;try{c&&c.close()}catch(e){}try{p&&p.destroy()}catch(e){}}
  failed(){if(this.dead)return;clearTimeout(this.ct);
   if(this.st==='connecting')this.fatal('Could not connect to room '+this.code+'. Check the room code and that the host is online.');
-  else if(this.st==='reconnecting'){this.drop();clearTimeout(this.rt);this.rt=setTimeout(()=>this.retry(),2000)}}
+  else if(this.st==='reconnecting'){this.drop();clearTimeout(this.rt);this.rt=setTimeout(()=>this.retry(),800)}}
  fatal(t){this.dead=true;clearInterval(this.hb);clearTimeout(this.ct);clearTimeout(this.rt);this.drop();status=null;
   try{localStorage.removeItem('bluffSession')}catch(e){}
-  if(this.hasWin&&V)feed({...V,phase:'over',end:t,kind:'abort',winner:null,pending:false,offline:[]});else{alert(t);leave()}}
+  if(this.hasWin&&V&&V.phase==='play')feed({...V,phase:'over',end:t,kind:'abort',winner:null,pending:false,offline:[]});else{alert(t);leave()}}
  lost(){if(this.st!=='online')return;this.drop();
-  if(V&&V.phase==='play'&&this.token){this.st='reconnecting';this.deadline=(this.rx||Date.now())+this.grace*1000;this.att=0;this.saveSession();this.stat();this.rt=setTimeout(()=>this.retry(),300)}
+  if(V&&this.token){this.st='reconnecting';this.deadline=(this.rx||Date.now())+this.grace*1000;this.att=0;this.saveSession();this.stat();this.rt=setTimeout(()=>this.retry(),300)}
   else this.fatal('Disconnected from the host.')}
  saveSession(){if(!this.token)return;try{localStorage.bluffSession=JSON.stringify({code:this.code,token:this.token,t:Date.now()})}catch(e){}}
- stat(){status=`Reconnecting to the host (attempt ${Math.max(1,this.att)}, ${Math.max(0,Math.round((this.deadline-Date.now())/1000))}s left). Your seat and cards are held until the host's 60-second deadline.`;if(V)ui()}
- retry(){if(this.dead||this.st!=='reconnecting')return;if(Date.now()>=this.deadline)return this.fatal('You did not reconnect within 60 seconds.');this.att++;this.stat();this.go()}
+ stat(){status=`Reconnecting to the host (attempt ${Math.max(1,this.att)}, ${Math.max(0,Math.round((this.deadline-Date.now())/1000))}s left). Your seat and cards are held until the host's ${this.grace}-second deadline.`;if(V)ui()}
+ retry(){if(this.dead||this.st!=='reconnecting')return;if(Date.now()>=this.deadline)return this.fatal(`You did not reconnect within ${GRACE} seconds.`);this.att++;this.stat();this.go()}
  msg(m){if(!m||typeof m!=='object')return;
-  if(m.t==='welcome'){clearTimeout(this.ct);const ok=Number.isInteger(m.i)&&Number.isInteger(m.n)&&m.n>=2&&m.n<=6&&m.i>=0&&m.i<m.n;
+  if(m.t==='welcome'){clearTimeout(this.ct);const ok=Number.isInteger(m.i)&&Number.isInteger(m.n)&&m.n>=2&&m.n<=10&&m.i>=0&&m.i<m.n;
    if(!ok)return this.fatal('The host sent an invalid welcome message.');
    this.grace=Math.max(10,Math.min(600,+m.grace||GRACE));
    if(!this.hasWin){this.token=typeof m.token==='string'?m.token:null;this.hasWin=true;this.st='online';this.canNew=false;
@@ -601,17 +633,16 @@ class Client{
    else return this.fatal('Could not get your original seat back.');
    status=null;clearTimeout(this.rt);clearInterval(this.hb);this.hb=setInterval(()=>{
     if(this.st==='online'){if(Date.now()-this.rx>TIMEOUT)this.lost();else{send(this.conn,{t:'ping'});this.saveSession()}}
-    else if(this.st==='reconnecting'){this.stat();if(Date.now()>=this.deadline)this.fatal('The 60-second reconnection period ended.')}},HEART/3)}
-  else if(m.t==='view'&&m.v&&typeof m.v==='object'){this.backup=null;feed(m.v);if(m.v.phase==='over'){try{localStorage.removeItem('bluffSession')}catch(e){}}}
+    else if(this.st==='reconnecting'){this.stat();if(Date.now()>=this.deadline)this.fatal(`The ${GRACE}-second reconnection period ended.`)}},HEART/3)}
+  else if(m.t==='view'&&m.v&&typeof m.v==='object'){this.backup=null;feed(m.v);this.saveSession()}
   else if(m.t==='notice')toast(String(m.m));
   else if(m.t==='reject'){toast(String(m.m));if(this.backup){sel=this.backup;this.backup=null;if(V)ui()}}
   else if(m.t==='bye'||m.t==='error')this.fatal(String(m.m||'Error.'))}
  tx(m){if(this.st!=='online')return'Not connected to the host.';send(this.conn,m);return null}
  play(c,k){return this.tx({t:'play',cards:c,claim:k})}bluff(){return this.tx({t:'bluff'})}accept(){return this.tx({t:'accept'})}
- pass(){return this.tx({t:'pass'})}newGame(){return null}abortMatch(){return'Only the host can end the match.'}
+ pass(){return this.tx({t:'pass'})}newGame(){return V&&V.phase==='over'?this.tx({t:'rematch'}):'The next round has not been requested yet.'}abortMatch(){return'Only the host can end the match.'}
  close(){this.dead=true;clearInterval(this.hb);clearTimeout(this.ct);clearTimeout(this.rt);
-  if(this.leaving&&V&&V.phase==='play')this.saveSession();
-  else if(this.leaving){try{localStorage.removeItem('bluffSession')}catch(e){}}
+  if(this.leaving){if(V&&V.phase==='play')this.saveSession();else{try{localStorage.removeItem('bluffSession')}catch(e){}}send(this.conn,{t:'leave'})}
   const c=this.conn;this.conn=null;try{c&&c.close()}catch(e){}setTimeout(()=>{try{this.peer&&this.peer.destroy()}catch(e){}},200)}
 }
 // ============================================================ menu
