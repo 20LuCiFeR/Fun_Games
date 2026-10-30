@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#090d1a">
-  <meta name="description" content="A fun little arcade of browser games and creative tools. Play Bingo, Bluff, Tic-Tac-Toe, and explore your chats with Chat Analyzer.">
+  <meta name="description" content="Play Bingo, Bluff, Tic-Tac-Toe, Chess Royale with online rooms, and explore your chats with Chat Analyzer.">
   <title>Fun Games — Your Little Internet Arcade</title>
   <style>
     :root {
@@ -130,6 +130,12 @@
     .card-art.bingo { background: radial-gradient(ellipse at 50% 105%, rgba(254,167,124,.32), transparent 65%), linear-gradient(135deg, #3b2148, #251d39); }
     .card-art.bluff { background: radial-gradient(ellipse at 50% 95%, rgba(130,227,175,.20), transparent 60%), linear-gradient(135deg, #173a3d, #172b37); }
     .card-art.tictactoe { background: radial-gradient(ellipse at 55% 100%, rgba(117,162,255,.34), transparent 65%), linear-gradient(135deg, #1e2858, #19213c); }
+    .card-art.chess { background: radial-gradient(ellipse at 53% 103%, rgba(222,194,153,.29), transparent 70%), linear-gradient(135deg,#302b29,#171a20); }
+    .chess-preview-grid { display:grid;grid-template-columns:repeat(8,1fr);width:196px;height:196px;border:8px solid #c9b8a0;border-radius:6px;overflow:hidden;transform:perspective(450px) rotateX(19deg) rotateZ(-9deg) translateY(10px);box-shadow:0 9px 0 #312922,14px 22px 0 #0c0b0a70,0 30px 48px #060606aa; }
+    .chess-preview-grid span { display:grid;place-items:center;font:20px/1 Georgia,serif;background:#e6dac5;color:#211e1c;text-shadow:0 1px 1px #0007; }
+    .chess-preview-grid span:nth-child(16n+2),.chess-preview-grid span:nth-child(16n+4),.chess-preview-grid span:nth-child(16n+6),.chess-preview-grid span:nth-child(16n+8),.chess-preview-grid span:nth-child(16n+9),.chess-preview-grid span:nth-child(16n+11),.chess-preview-grid span:nth-child(16n+13),.chess-preview-grid span:nth-child(16n+15){background:#443e3a;}
+    .chess-preview-grid span.black-piece {color:#0b0b0d;text-shadow:0 1px 1px #fffb;}
+    .chess-preview-grid span.white-piece {color:#f7efe3;text-shadow:0 1px 2px #181512,0 0 1px #181512;}
     .card-art.analyzer { background: radial-gradient(ellipse at 50% 100%, rgba(197,148,255,.29), transparent 65%), linear-gradient(135deg, #33214f, #211d43); }
     .art-glow { position: absolute; width: 260px; height: 260px; border-radius: 50%; filter: blur(80px); opacity: .15; background: #fff; top: -165px; right: -60px; z-index: -1; }
     .card-type { position: absolute; top: 18px; left: 18px; z-index: 2; padding: 7px 11px; border: 1px solid rgba(255,255,255,.16); background: rgba(11,17,35,.34); color: #e5e8fb; border-radius: 9px; font-weight: 800; font-size: 10px; letter-spacing: .13em; text-transform: uppercase; backdrop-filter: blur(10px); }
@@ -280,13 +286,13 @@
 
     <section class="catalog container" id="collection" aria-labelledby="collection-title">
       <div class="section-heading">
-        <div><div class="section-kicker">Pick your next adventure</div><h2 id="collection-title">Explore the collection<span aria-hidden="true"> ✨</span></h2><p>Four little experiences. Something for every mood.</p></div>
-        <span class="total-label" id="totalCount">4 experiences</span>
+        <div><div class="section-kicker">Pick your next adventure</div><h2 id="collection-title">Explore the collection<span aria-hidden="true"> ✨</span></h2><p>Five little experiences. Something for every mood.</p></div>
+        <span class="total-label" id="totalCount">5 experiences</span>
       </div>
       <div class="toolbar">
         <div class="filters" role="group" aria-label="Filter experiences">
-          <button class="filter" data-filter="all" aria-pressed="true" type="button">All <span id="allCount">4</span></button>
-          <button class="filter" data-filter="game" aria-pressed="false" type="button">🎮 Games <span id="gamesCount">3</span></button>
+          <button class="filter" data-filter="all" aria-pressed="true" type="button">All <span id="allCount">5</span></button>
+          <button class="filter" data-filter="game" aria-pressed="false" type="button">🎮 Games <span id="gamesCount">4</span></button>
           <button class="filter" data-filter="tool" aria-pressed="false" type="button">🛠️ Tools <span id="toolsCount">1</span></button>
         </div>
         <label class="search-wrap">
@@ -313,7 +319,7 @@
        1. Upload its .html file to your GitHub repository.
        2. Add an object to GAMES below.
        3. Set category to "game" or "tool".
-       4. Choose art: "bingo", "bluff", "tictactoe", or "analyzer".
+       4. Choose art: "bingo", "bluff", "tictactoe", "chess", or "analyzer".
        The file path is RELATIVE to this index.html file.
        ========================================================== */
     const GAMES = [
@@ -348,6 +354,16 @@
         action: "Play Tic-Tac-Toe"
       },
       {
+        title: "Chess Royale",
+        icon: "♞",
+        description: "Challenge a friend online using a Room Code, switch between elegant 2D and 3D chessboards, or test your strategy against the CPU.",
+        file: "chess.html",
+        category: "game",
+        tags: ["2D & 3D", "Online Rooms", "Vs CPU", "Rematch"],
+        art: "chess",
+        action: "Play Chess"
+      },
+      {
         title: "Chat Analyzer",
         icon: "📊",
         description: "Turn your conversations into fun insights. Explore message stats, leaderboards, comparisons, and awards.",
@@ -363,6 +379,11 @@
       bingo: `<div class="bingo-board" aria-hidden="true"><div class="bingo-head"><b>B</b><b>I</b><b>N</b><b>G</b><b>O</b></div><div class="bingo-cells">${[5,22,32,51,64,9,17,42,58,72,13,27,'★',49,67,8,29,35,54,74,2,19,39,55,63].map((n, i) => `<span class="${n === '★' ? 'free' : [0,1,6,12,18,24].includes(i) ? 'marked' : ''}">${n}</span>`).join('')}</div></div><div class="ball" aria-hidden="true">25</div>`,
       bluff: `<div class="bluff-cards" aria-hidden="true"><div class="playing-card first" data-rank="K" data-suit="♠"></div><div class="playing-card second" data-rank="A" data-suit="♥"></div><div class="playing-card third" data-rank="Q" data-suit="♣"></div></div>`,
       tictactoe: `<div class="tic-board" aria-hidden="true"><span class="win">×</span><span class="o">○</span><span></span><span class="o">○</span><span class="win">×</span><span class="o">○</span><span></span><span></span><span class="win">×</span></div>`,
+      chess: `<div class="chess-preview-grid" aria-hidden="true">${[
+        '♜','♞','♝','♛','♚','♝','♞','♜',
+        ...Array(8).fill('♟'),...Array(32).fill(''),...Array(8).fill('♙'),
+        '♖','♘','♗','♕','♔','♗','♘','♖'
+      ].map(p=>`<span class="${'♟♜♞♝♛♚'.includes(p)&&p?'black-piece':p?'white-piece':''}">${p}</span>`).join('')}</div>`,
       analyzer: `<div class="analytics-window" aria-hidden="true"><div class="analytics-top"><span>CHAT ANALYTICS</span><span class="lights">•••</span></div><div class="analytics-content"><div class="chart-bars"><i></i><i></i><i></i><i></i><i></i></div><div class="award-pill"><strong>🏆</strong><span>TOP CHATTER</span></div></div></div>`
     };
 
