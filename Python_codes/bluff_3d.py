@@ -40,53 +40,211 @@ Controls (3D table):
  * Pick the rank you CLAIM with the gold chips, then press Play (or Enter).
    B = Bluff, Esc = clear selection.   Mouse wheel over the right panel scrolls the play log.
 
-Install:  automatic (if PyQt5 is missing, the script installs it with pip)
-Run:      python bluff.py
+Install:  fully automatic.  Needs only Python 3.8+ (and internet the first time).  If PyQt5 is
+          missing the script installs it itself: normal pip -> repairs pip if it is missing -> falls
+          back to a private environment in your home folder (~/.bluff_3d_env) when the system Python
+          is locked down.  On Linux it also checks for missing system libraries and offers to install
+          them.  Problems are shown in a pop-up window, so nothing just flashes closed.
+Run:      python bluff_3d.py      (Windows: double-click it, or "py bluff_3d.py")
 """
 
 import json
 import math
+import os
 import random
 import secrets
+import shutil
+import subprocess
 import sys
 import time
 from collections import Counter
 
 
+# ====================================================================== bootstrap
+# Everything below runs BEFORE PyQt5 is imported.  It makes the script work on a fresh computer.
+MIN_PYTHON = (3, 8)
+_LINUX_APT_PACKAGES = [
+    "libgl1", "libegl1", "libglib2.0-0", "libfontconfig1", "libdbus-1-3", "libxkbcommon0",
+    "libxkbcommon-x11-0", "libxcb-icccm4", "libxcb-image0", "libxcb-keysyms1", "libxcb-randr0",
+    "libxcb-render-util0", "libxcb-shape0", "libxcb-xinerama0", "libxcb-xkb1",
+]
+
+
+def _fatal(message):
+    """Show a problem where the person will actually see it (console AND a pop-up), then quit."""
+    print("\n" + message, file=sys.stderr)
+    try:                                         # pop-up for people who double-clicked the file
+        import tkinter
+        from tkinter import messagebox
+        root = tkinter.Tk()
+        root.withdraw()
+        messagebox.showerror("Bluff", message)
+        root.destroy()
+    except Exception:
+        pass
+    if os.name == "nt":                          # keep a double-clicked console window open
+        try:
+            input("\nPress Enter to close...")
+        except Exception:
+            pass
+    sys.exit(1)
+
+
+def _run(cmd, **kw):
+    try:
+        return subprocess.call(cmd, **kw) == 0
+    except (OSError, ValueError):
+        return False
+
+
+def _venv_dir():
+    return os.path.join(os.path.expanduser("~"), ".bluff_3d_env")
+
+
+def _venv_python():
+    sub = ("Scripts", "python.exe") if os.name == "nt" else ("bin", "python")
+    return os.path.join(_venv_dir(), *sub)
+
+
+def _venv_has_qt():
+    py = _venv_python()
+    return os.path.exists(py) and _run([py, "-c", "from PyQt5 import QtWidgets, QtNetwork"],
+                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def _pip_install_here():
+    """Install PyQt5 into the Python that is running us.  Returns True on success."""
+    base = [sys.executable, "-m", "pip", "install", "--disable-pip-version-check", "PyQt5"]
+    variants = ([], ["--user"], ["--break-system-packages"], ["--user", "--break-system-packages"])
+    for round_ in range(2):
+        for extra in variants:
+            if _run(base[:-1] + extra + base[-1:]):
+                return True
+        if round_ == 0:                          # maybe pip itself is missing: repair it, try again
+            print("pip did not work - trying to repair pip...")
+            if not (_run([sys.executable, "-m", "ensurepip", "--upgrade"]) or
+                    _run([sys.executable, "-m", "ensurepip", "--user", "--upgrade"])):
+                break
+    return False
+
+
+def _install_in_private_venv():
+    """Last resort (locked-down system Python): own little environment in the home folder."""
+    print("Installing PyQt5 into a private environment: " + _venv_dir())
+    if not os.path.exists(_venv_python()):
+        if not _run([sys.executable, "-m", "venv", _venv_dir()]):
+            return False
+    if not _venv_has_qt():
+        _run([_venv_python(), "-m", "pip", "install", "--disable-pip-version-check", "PyQt5"])
+    return _venv_has_qt()
+
+
+def _relaunch_in_private_venv():
+    env = dict(os.environ, BLUFF_3D_CHILD="1")
+    sys.exit(subprocess.call([_venv_python()] + sys.argv, env=env))
+
+
+def _linux_fix_libs(why):
+    """Linux only: a system library Qt needs is missing.  Offer to install it with apt."""
+    if not sys.platform.startswith("linux"):
+        return False
+    is_root = hasattr(os, "geteuid") and os.geteuid() == 0
+    apt = shutil.which("apt-get")
+    cmd = ([] if is_root else ["sudo"]) + ["apt-get", "install", "-y"] + _LINUX_APT_PACKAGES
+    print("\n" + why)
+    print("Qt needs some system libraries that are not installed on this computer.")
+    if apt and sys.stdin and sys.stdin.isatty():
+        try:
+            answer = input("Install them now with apt (it may ask for your password)? [Y/n] ").strip().lower()
+        except EOFError:
+            answer = "n"
+        if answer in ("", "y", "yes"):
+            _run((["sudo"] if not is_root else []) + ["apt-get", "update"])    # refresh the package list
+            return _run(cmd)
+    print("To fix it yourself run:\n   " + " ".join(cmd) +
+          "\n(other distributions: install the xcb / OpenGL / fontconfig packages for Qt5)")
+    return False
+
+
+def _import_qt():
+    try:
+        from PyQt5 import QtCore, QtGui, QtNetwork, QtWidgets  # noqa: F401
+        return None
+    except ImportError as e:
+        return e
+
+
 def _ensure_pyqt5():
-    """Install PyQt5 automatically if it is missing."""
+    """Make sure PyQt5 can be imported, installing whatever is needed.  Never leaves a silent failure."""
+    if sys.version_info < MIN_PYTHON:
+        _fatal("Bluff needs Python %d.%d or newer (this is %d.%d).\nPlease install a newer Python "
+               "from https://www.python.org/downloads/" % (MIN_PYTHON + sys.version_info[:2]))
     try:
         import PyQt5  # noqa: F401
-        return
+        have_pkg = True
     except ImportError:
-        pass
-    import importlib
-    import site
-    import subprocess
+        have_pkg = False
+
+    if have_pkg:
+        err = _import_qt()
+        if err is None:
+            return
+        # PyQt5 is installed but cannot load: almost always a missing system library on Linux
+        if _linux_fix_libs("PyQt5 could not start: %s" % err) and _import_qt() is None:
+            return
+        _fatal("PyQt5 is installed but could not be loaded:\n%s" % err)
+
+    if os.environ.get("BLUFF_3D_CHILD"):
+        _fatal("PyQt5 could not be installed, even in a private environment.\nCheck your internet "
+               "connection and run the game again.")
+    if _venv_has_qt():                           # installed earlier by this script
+        _relaunch_in_private_venv()
 
     print("PyQt5 not found, installing it (one-time only)...")
-    attempts = (
-        ["install", "PyQt5"],
-        ["install", "--user", "PyQt5"],
-        ["install", "--break-system-packages", "PyQt5"],   # needed on newer Linux systems
-    )
-    for args in attempts:
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip"] + args)
-            break
-        except (subprocess.CalledProcessError, OSError):
-            continue
-    else:
-        sys.exit("Could not install PyQt5. Check your internet or run: pip install PyQt5")
+    if _pip_install_here():
+        import importlib
+        import site
+        importlib.invalidate_caches()
+        for extra in (site.getusersitepackages(),):
+            if extra not in sys.path:
+                sys.path.append(extra)
+        err = _import_qt()
+        if err is None:
+            return
+        if _linux_fix_libs("PyQt5 was installed but could not start: %s" % err) and _import_qt() is None:
+            return
+        _fatal("PyQt5 was installed but could not be loaded:\n%s" % err)
 
-    importlib.invalidate_caches()
-    user_site = site.getusersitepackages()
-    if user_site not in sys.path:
-        sys.path.append(user_site)
+    if _install_in_private_venv():
+        _relaunch_in_private_venv()
+    _fatal("Could not install PyQt5 automatically.\nCheck your internet connection, then run:\n"
+           "    %s -m pip install PyQt5" % os.path.basename(sys.executable or "python"))
+
+
+def _preflight_display():
+    """Before opening a window: make sure there is a desktop to draw on (Linux), and Qt's X11 libraries."""
+    if not sys.platform.startswith("linux") or os.environ.get("QT_QPA_PLATFORM"):
+        return
+    if not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
+        _fatal("No desktop display found.\nRun the game from a graphical desktop session "
+               "(not a plain SSH / text-only terminal).")
     try:
-        import PyQt5  # noqa: F401
-    except ImportError:
-        sys.exit("PyQt5 was installed but could not be loaded. Please run the script again.")
+        import glob
+        import PyQt5
+        plugin = glob.glob(os.path.join(os.path.dirname(PyQt5.__file__), "Qt*", "plugins", "platforms",
+                                        "libqxcb.so"))
+        if plugin and shutil.which("ldd"):
+            out = subprocess.run(["ldd", plugin[0]], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                 universal_newlines=True, timeout=30).stdout
+            missing = sorted({ln.split()[0] for ln in out.splitlines() if "not found" in ln})
+            if missing:
+                if not _linux_fix_libs("Missing system libraries: " + ", ".join(missing)):
+                    _fatal("Missing system libraries: " + ", ".join(missing) +
+                           "\nInstall them (see the console for the command) and run the game again.")
+    except SystemExit:
+        raise
+    except Exception:
+        pass                                     # the check is only a convenience
 
 
 _ensure_pyqt5()
@@ -111,7 +269,7 @@ BOT_DELAY_MS = 2000          # pause before every bot move
 HISTORY_VISIBLE = 4          # plays visible without scrolling
 HISTORY_MAX = 60             # how many past plays can be scrolled through
 WAITING = "Waiting…"
-RECONNECT_S = 20             # how long a disconnected player has to come back
+RECONNECT_S = 60             # how long a disconnected player has to come back
 LIMIT_PLAYS = 30             # plays left once only 2 players remain; then fewest cards wins
 
 SUITS = ["♠", "♥", "♦", "♣"]
@@ -2753,7 +2911,8 @@ class ClientController:
 
 
 # ====================================================================== main
-if __name__ == "__main__":
+def main():
+    _preflight_display()
     app = QApplication(sys.argv)
     while True:
         dlg = StartDialog()
@@ -2773,3 +2932,13 @@ if __name__ == "__main__":
         if not ctrl.go_menu:
             break
     sys.exit(0)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception:
+        import traceback
+        _fatal("Bluff crashed:\n\n" + traceback.format_exc())
