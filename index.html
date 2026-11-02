@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#090d1a">
-  <meta name="description" content="Play Bingo, Bluff, Tic-Tac-Toe, Chess Royale with online rooms, and explore your chats with Chat Analyzer.">
+  <meta name="description" content="Play Bingo, Bluff, Tic-Tac-Toe, Chess Royale, and Dots & Boxes — plus explore your chats with Chat Analyzer.">
   <title>Fun Games — Your Little Internet Arcade</title>
   <style>
     :root {
@@ -130,6 +130,9 @@
     .card-art.bingo { background: radial-gradient(ellipse at 50% 105%, rgba(254,167,124,.32), transparent 65%), linear-gradient(135deg, #3b2148, #251d39); }
     .card-art.bluff { background: radial-gradient(ellipse at 50% 95%, rgba(130,227,175,.20), transparent 60%), linear-gradient(135deg, #173a3d, #172b37); }
     .card-art.tictactoe { background: radial-gradient(ellipse at 55% 100%, rgba(117,162,255,.34), transparent 65%), linear-gradient(135deg, #1e2858, #19213c); }
+    .card-art.dotsboxes { background: radial-gradient(ellipse at 52% 103%, rgba(117,236,223,.28), transparent 68%), linear-gradient(130deg,#173e4d,#172438); }
+    .dab-preview { width: 246px; height: 209px; transform: rotate(-7deg) translateY(15px); filter: drop-shadow(13px 16px 12px rgba(4,17,29,.45)); }
+    .dab-preview svg { width: 100%; height: 100%; overflow: visible; }
     .card-art.chess { background: radial-gradient(ellipse at 53% 103%, rgba(222,194,153,.29), transparent 70%), linear-gradient(135deg,#302b29,#171a20); }
     .chess-preview-grid { display:grid;grid-template-columns:repeat(8,1fr);width:196px;height:196px;border:8px solid #c9b8a0;border-radius:6px;overflow:hidden;transform:perspective(450px) rotateX(19deg) rotateZ(-9deg) translateY(10px);box-shadow:0 9px 0 #312922,14px 22px 0 #0c0b0a70,0 30px 48px #060606aa; }
     .chess-preview-grid span { display:grid;place-items:center;font:20px/1 Georgia,serif;background:#e6dac5;color:#211e1c;text-shadow:0 1px 1px #0007; }
@@ -286,13 +289,13 @@
 
     <section class="catalog container" id="collection" aria-labelledby="collection-title">
       <div class="section-heading">
-        <div><div class="section-kicker">Pick your next adventure</div><h2 id="collection-title">Explore the collection<span aria-hidden="true"> ✨</span></h2><p>Five little experiences. Something for every mood.</p></div>
-        <span class="total-label" id="totalCount">5 experiences</span>
+        <div><div class="section-kicker">Pick your next adventure</div><h2 id="collection-title">Explore the collection<span aria-hidden="true"> ✨</span></h2><p>Six little experiences. Something for every mood.</p></div>
+        <span class="total-label" id="totalCount">6 experiences</span>
       </div>
       <div class="toolbar">
         <div class="filters" role="group" aria-label="Filter experiences">
-          <button class="filter" data-filter="all" aria-pressed="true" type="button">All <span id="allCount">5</span></button>
-          <button class="filter" data-filter="game" aria-pressed="false" type="button">🎮 Games <span id="gamesCount">4</span></button>
+          <button class="filter" data-filter="all" aria-pressed="true" type="button">All <span id="allCount">6</span></button>
+          <button class="filter" data-filter="game" aria-pressed="false" type="button">🎮 Games <span id="gamesCount">5</span></button>
           <button class="filter" data-filter="tool" aria-pressed="false" type="button">🛠️ Tools <span id="toolsCount">1</span></button>
         </div>
         <label class="search-wrap">
@@ -319,7 +322,7 @@
        1. Upload its .html file to your GitHub repository.
        2. Add an object to GAMES below.
        3. Set category to "game" or "tool".
-       4. Choose art: "bingo", "bluff", "tictactoe", "chess", or "analyzer".
+       4. Choose art: "bingo", "bluff", "tictactoe", "chess", "dotsboxes", or "analyzer".
        The file path is RELATIVE to this index.html file.
        ========================================================== */
     const GAMES = [
@@ -364,6 +367,16 @@
         action: "Play Chess"
       },
       {
+        title: "Dots & Boxes",
+        icon: "🔷",
+        description: "Connect the dots, complete squares, and claim more boxes than your rivals. A tactical battle for every line!",
+        file: "dots_and_boxes.html",
+        category: "game",
+        tags: ["Strategy", "Multiplayer", "Vs CPU", "Custom Grid"],
+        art: "dotsboxes",
+        action: "Play Dots & Boxes"
+      },
+      {
         title: "Chat Analyzer",
         icon: "📊",
         description: "Turn your conversations into fun insights. Explore message stats, leaderboards, comparisons, and awards.",
@@ -384,6 +397,25 @@
         ...Array(8).fill('♟'),...Array(32).fill(''),...Array(8).fill('♙'),
         '♖','♘','♗','♕','♔','♗','♘','♖'
       ].map(p=>`<span class="${'♟♜♞♝♛♚'.includes(p)&&p?'black-piece':p?'white-piece':''}">${p}</span>`).join('')}</div>`,
+      dotsboxes: `<div class="dab-preview" aria-hidden="true"><svg viewBox="0 0 246 209" xmlns="http://www.w3.org/2000/svg">
+        <rect x="23" y="8" width="202" height="192" rx="16" fill="#0b2235" stroke="#416b7b" stroke-width="2"/>
+        <rect x="38" y="23" width="40" height="40" rx="5" fill="#ffba8d" fill-opacity=".88"/>
+        <rect x="78" y="63" width="40" height="40" rx="5" fill="#80e8d9" fill-opacity=".9"/>
+        <rect x="118" y="103" width="40" height="40" rx="5" fill="#b9a5ff" fill-opacity=".88"/>
+        <g stroke="#405a71" stroke-width="5" stroke-linecap="round" opacity=".65">
+          ${Array.from({length:5},(_,i)=>`<path d="M38 ${23+i*40}H198 M${38+i*40} 23V183"/>`).join('')}
+        </g>
+        <g stroke-width="6" stroke-linecap="round" fill="none">
+          <path stroke="#ffba8d" d="M38 23H78 M38 23V63 M78 23V63 M38 63H78 M78 23H118 M118 23V63"/>
+          <path stroke="#80e8d9" d="M78 63H118 M78 63V103 M118 63V103 M78 103H118 M118 63H158"/>
+          <path stroke="#b9a5ff" d="M118 103H158 M118 103V143 M158 103V143 M118 143H158 M158 143H198"/>
+          <path stroke="#80e8d9" d="M38 143H78 M198 63V103 M78 143V183"/>
+        </g>
+        <g fill="#e9faf8" stroke="#1d5268" stroke-width="2">
+          ${Array.from({length:25},(_,i)=>`<circle cx="${38+(i%5)*40}" cy="${23+Math.floor(i/5)*40}" r="5"/>`).join('')}
+        </g>
+        <g font-family="system-ui,Arial,sans-serif" font-size="21" font-weight="900" fill="#1b2a37" text-anchor="middle" dominant-baseline="middle"><text x="58" y="44">A</text><text x="98" y="84">B</text><text x="138" y="124">A</text></g>
+      </svg></div>`,
       analyzer: `<div class="analytics-window" aria-hidden="true"><div class="analytics-top"><span>CHAT ANALYTICS</span><span class="lights">•••</span></div><div class="analytics-content"><div class="chart-bars"><i></i><i></i><i></i><i></i><i></i></div><div class="award-pill"><strong>🏆</strong><span>TOP CHATTER</span></div></div></div>`
     };
 
